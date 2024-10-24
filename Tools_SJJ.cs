@@ -14,6 +14,7 @@ namespace NS_Tools_SJJ
 #if UNITY_EDITOR
     using UnityEditor;
     using TMPro;
+    using System.Text.RegularExpressions;
 #endif
 
     // 自定义属性，用于标记需要高亮显示的字段
@@ -59,7 +60,17 @@ namespace NS_Tools_SJJ
 
         void Awake()
         {
-            INS = this;
+        
+            if (INS == null)
+            {
+                INS = this;
+                DontDestroyOnLoad(this.gameObject);
+               
+            }
+            else
+            {
+                Destroy(this.gameObject); // 防止重复实例
+            }
         }
         void Start()
         {
@@ -101,7 +112,7 @@ namespace NS_Tools_SJJ
         }
 
 
-      
+
         Coroutine 当前倒计时协程_Text;
         public void 数字倒计时_Text(float F_时长, Text tt, Action 结束回调)
         {
@@ -260,6 +271,69 @@ namespace NS_Tools_SJJ
 
             // 更新Image的尺寸
             RAW.rectTransform.sizeDelta = new Vector2(newWidth, newHeight);
+        }
+
+       
+
+
+        /// <summary>
+        /// 泛型方法，根据元素中的第一个连续数字对列表进行排序。
+        /// </summary>
+        /// <typeparam name="T">列表中元素的类型。</typeparam>
+        /// <param name="list">需要排序的列表。</param>
+        /// <param name="nameSelector">用于提取字符串属性的选择器函数。</param>
+        public void 对List内元素进行数字排序<T>(List<T> list, Func<T, string> nameSelector)
+        {
+            if (list == null || nameSelector == null)
+            {
+                throw new ArgumentNullException("列表或选择器函数不能为null。");
+            }
+
+            list.Sort((a, b) =>
+            {
+                int numA = Int_提取第一个连续数(nameSelector(a));
+                int numB = Int_提取第一个连续数(nameSelector(b));
+                return numA.CompareTo(numB);
+            });
+        }
+
+        /// <summary>
+        /// 提取字符串中的第一个连续数字序列，并将其解析为整数。
+        /// 如果没有找到数字，则返回0。
+        /// </summary>
+        /// <param name="name">需要解析的字符串。</param>
+        /// <returns>解析出的整数，如果没有数字则返回0。</returns>
+        public int Int_提取第一个连续数(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return 0;
+            }
+
+            // 使用正则表达式提取第一个连续的数字序列
+            var match = Regex.Match(name, @"\d+");
+            if (match.Success)
+            {
+                // 解析数字，处理可能的解析异常
+                if (int.TryParse(match.Value, out int number))
+                {
+                    return number;
+                }
+            }
+
+            return 0; // 如果没有找到数字或解析失败，返回0
+        }
+
+
+
+        public string ST_去掉扩展名(string filename)
+        {
+            int lastDotIndex = filename.LastIndexOf('.');
+            if (lastDotIndex > 0)
+            {
+                return filename.Substring(0, lastDotIndex);
+            }
+            return filename; // 没有扩展名，返回原始文件名
         }
 
 
