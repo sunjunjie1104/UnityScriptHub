@@ -60,18 +60,19 @@ namespace NS_Tools_SJJ
 
         void Awake()
         {
-        
+
             if (INS == null)
             {
                 INS = this;
                 DontDestroyOnLoad(this.gameObject);
-               
+
             }
             else
             {
                 Destroy(this.gameObject); // 防止重复实例
             }
         }
+
         void Start()
         {
 
@@ -81,6 +82,7 @@ namespace NS_Tools_SJJ
         {
 
         }
+
 
 
         public List<int> List_Int_获取的随机数字组(int 获取的数字个数, int 范围开始数, int 范围结束数)
@@ -273,7 +275,7 @@ namespace NS_Tools_SJJ
             RAW.rectTransform.sizeDelta = new Vector2(newWidth, newHeight);
         }
 
-       
+
 
 
         /// <summary>
@@ -337,12 +339,46 @@ namespace NS_Tools_SJJ
         }
 
 
+        public List<Sprite> List_SP_转换的图片组(List<Texture> textures)
+        {
+            if (textures.Count == 0) { return null; }
+            List<Sprite> List_SP = new List<Sprite>();
+            for (int i = 0; i < textures.Count; i++)
+            {
+                Sprite sprite = Sprite.Create(textures[i] as Texture2D, new Rect(0, 0, textures[i].width, textures[i].height), Vector2.zero);
+                List_SP.Add(sprite);
+
+            }
+            return List_SP;
+        }
+
+        public List<Texture> List_TEX_转换的图片组(List<Sprite> sprites)
+        {
+            if (sprites.Count == 0) { return null; }
+            List<Texture> List_TEX = new List<Texture>();
+            for (int i = 0; i < sprites.Count; i++)
+            {
+                Texture2D texture = sprites[i].texture;
+                List_TEX.Add(texture);
+            }
+            return List_TEX;
+        }
+
+        public Sprite SP_转换的图片(Texture texture)
+        {
+            Sprite sprite = Sprite.Create(texture as Texture2D, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
+            return sprite;
+        }
+
+        public Texture TEX_转换的图片(Sprite sprite)
+        {
+            Texture2D texture = sprite.texture;
+            return texture;
+        }
+
+
+
     }
 
 
 }
-
-
-
-
-
