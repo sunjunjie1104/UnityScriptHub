@@ -5,7 +5,7 @@ namespace NS_Tools_SJJ
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
-    using DG.Tweening;
+
 
 
     //示例    [HighlightIfNull] public GameObject targetObject;
@@ -15,6 +15,11 @@ namespace NS_Tools_SJJ
     using UnityEditor;
     using TMPro;
     using System.Text.RegularExpressions;
+    using System.Net;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.IO;
+    using UnityEngine.Networking;
 #endif
 
     // 自定义属性，用于标记需要高亮显示的字段
@@ -71,16 +76,6 @@ namespace NS_Tools_SJJ
             {
                 Destroy(this.gameObject); // 防止重复实例
             }
-        }
-
-        void Start()
-        {
-
-        }
-
-        void Update()
-        {
-
         }
 
 
@@ -376,6 +371,175 @@ namespace NS_Tools_SJJ
             return texture;
         }
 
+
+
+
+        // 通用延时执行方法
+        public void 延时执行_无参(float F_延时, Action action)
+        {
+            StartCoroutine(延时执行协程(action, F_延时));
+        }
+
+        private IEnumerator 延时执行协程(Action action, float delayInSeconds)
+        {
+            yield return new WaitForSeconds(delayInSeconds);
+            action?.Invoke(); // 执行传入的方法
+        }
+
+
+        public string ST_获取的本地IP()
+        {
+            string localIP = "";
+            try
+            {
+                // 获取本地主机名
+                string hostName = Dns.GetHostName();
+                // 通过主机名获取所有与本机相关的IP地址
+                IPAddress[] ipAddresses = Dns.GetHostAddresses(hostName);
+
+                // 过滤出IPv4地址
+                foreach (IPAddress ip in ipAddresses)
+                {
+                    if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        localIP = ip.ToString();
+                        break; // 找到一个IPv4地址就返回
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError("获取本地IP地址时出错: " + ex.Message);
+            }
+
+            return localIP;
+        }
+
+
+
+        public int Int_获取自动分配的UDP端口号()
+        {
+            int availablePort = 0;
+            try
+            {
+                // 使用 UdpClient 自动分配端口
+                UdpClient udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
+                availablePort = ((IPEndPoint)udpClient.Client.LocalEndPoint).Port;
+                udpClient.Close(); // 使用完后关闭
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError("获取可用UDP端口时出错: " + ex.Message);
+            }
+
+            return availablePort;
+        }
+
+
+
+
+
+        public int Int_限制数值范围(int value, int bound1, int bound2)
+        {
+            // 确保 bound1 是最小值，bound2 是最大值
+            int min = Math.Min(bound1, bound2);
+            int max = Math.Max(bound1, bound2);
+
+            if (value < min)
+            {
+                value = min;
+            }
+            else if (value > max)
+            {
+                value = max;
+            }
+
+            return value;
+        }
+
+        public float F_限制数值范围(float value, float bound1, float bound2)
+        {
+            // 确保 bound1 是最小值，bound2 是最大值
+            float min = Math.Min(bound1, bound2);
+            float max = Math.Max(bound1, bound2);
+
+            if (value < min)
+            {
+                value = min;
+            }
+            else if (value > max)
+            {
+                value = max;
+            }
+
+            return value;
+        }
+
+
+
+
+        public byte[] BY_字符串转成16进制字节组(string str)
+        {
+            // 16进制 要发送的数据
+            string[] strArray = str.Split(' ');
+            byte[] sendData = new byte[strArray.Length];
+            // 16进制 要发送的数据
+            for (int i = 0; i < strArray.Length; i++)
+            {
+                sendData[i] = byte.Parse(strArray[i], System.Globalization.NumberStyles.HexNumber);
+            }
+            return sendData;
+
+
+        }
+
+        public byte[] BY_字符串转成UTF8字节组(string str)
+        {
+
+            byte[] sendData = Encoding.UTF8.GetBytes(str);
+
+            return sendData;
+        }
+
+        public byte[] BY_字符串转成ASCII字节组(string str)
+        {
+            byte[] sendData = Encoding.ASCII.GetBytes(str);
+            return sendData;
+        }
+
+        public byte[] BY_字符串转成GB2312字节组(string str)
+        {
+            byte[] sendData = Encoding.GetEncoding("GB2312").GetBytes(str);
+            return sendData;
+        }
+
+
+
+        public void 屏幕截图并保存(string ST_路径)
+        {
+            StartCoroutine(IE_屏幕截图并保存在streaming下(ST_路径));
+        }
+        IEnumerator IE_屏幕截图并保存在streaming下(string 路径)
+        {
+
+            yield return new WaitForEndOfFrame();
+            string filename;
+            byte[] bytes;
+            Texture2D tex;
+            string oldFilePath;
+            filename = DateTime.Now.ToString("yyyy_MMdd_HHmm_ss_") + UnityEngine.Random.Range(0, 9999).ToString("0000");
+            oldFilePath = Application.streamingAssetsPath + 路径 + filename + ".png";
+            FileStream f = new FileStream(oldFilePath, FileMode.Create);
+
+            tex = new Texture2D(Screen.width, Screen.height);
+            tex.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0, true);
+            tex.Apply();
+
+            bytes = tex.EncodeToPNG();
+            f.Write(bytes, 0, bytes.Length);
+            f.Close();
+            print("已截图并保存在" + oldFilePath);
+        }
 
 
     }
