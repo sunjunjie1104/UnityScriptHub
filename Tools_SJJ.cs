@@ -855,7 +855,7 @@ public class Tools_SJJ : MonoBehaviour
         }
     }
 
-    //示例  Tools_SJJ.INS.模拟鼠标点击("左键", new Vector2(1910, 1));
+    //示例   Tools_SJJ.INS.模拟鼠标点击("左键", new Vector2(1920, 1080));
     public void 模拟鼠标点击(string a, Vector2 position)
     {
         double x = position.x * 100;
@@ -880,6 +880,8 @@ public class Tools_SJJ : MonoBehaviour
                 break;
         }
     }
+
+
 
     public void 显示FPS()
     {
@@ -1047,6 +1049,64 @@ public class Tools_SJJ : MonoBehaviour
 
         }
     }
+
+
+
+
+
+    string ST_程序窗口1_名字;
+    string ST_程序窗口2_名字;
+
+    string ST_程序窗口1_UDP消息;
+    string ST_程序窗口2_UDP消息;
+
+    string ST_程序窗口1_路径;
+    string ST_程序窗口2_路径;
+
+    string ST_程序窗口1_Quicker动作ID;
+    string ST_程序窗口2_Quicker动作ID;
+
+    //需要配合UDP用
+    public void 启用切换程序窗口显示()
+    {
+
+        ST_程序窗口1_名字 = ST_读取表格单格信息("/切换程序窗口/切换程序窗口配置表", 3, 2);
+        ST_程序窗口2_名字 = ST_读取表格单格信息("/切换程序窗口/切换程序窗口配置表", 4, 2);
+
+        ST_程序窗口1_UDP消息 = ST_读取表格单格信息("/切换程序窗口/切换程序窗口配置表", 3, 3);
+        ST_程序窗口2_UDP消息 = ST_读取表格单格信息("/切换程序窗口/切换程序窗口配置表", 4, 3);
+
+        ST_程序窗口1_路径 = ST_读取表格单格信息("/切换程序窗口/切换程序窗口配置表", 3, 4);
+        ST_程序窗口2_路径 = ST_读取表格单格信息("/切换程序窗口/切换程序窗口配置表", 4, 4);
+
+        ST_程序窗口1_Quicker动作ID = ST_读取表格单格信息("/切换程序窗口/切换程序窗口配置表", 3, 5);
+        ST_程序窗口2_Quicker动作ID = ST_读取表格单格信息("/切换程序窗口/切换程序窗口配置表", 4, 5);
+
+        UDP_Control.INS.Event_UDP_接收消息 += EVENT_UDP来消息执行一次;
+
+
+    }
+    void EVENT_UDP来消息执行一次(string a)
+    {
+        if (a == ST_程序窗口1_UDP消息)
+        {
+            打开外部文件(ST_程序窗口1_名字, ST_程序窗口1_路径);
+            打开Quicker动作(ST_程序窗口1_Quicker动作ID);
+        }else
+        if (a == ST_程序窗口2_UDP消息)
+        {
+            打开外部文件(ST_程序窗口2_名字, ST_程序窗口2_路径);
+            打开Quicker动作(ST_程序窗口2_Quicker动作ID);
+        }
+        else
+        {
+            print(a);
+        }
+    }
+
+
+
+
 
 
     #region  读写表格
