@@ -1,0 +1,629 @@
+using RenderHeads.Media.AVProVideo;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
+public class LoadAssets : MonoBehaviour
+{
+    public static LoadAssets INS;
+    public GameObject Panel_加载界面, G_PRE_MP;
+    public Text Text_提示文本, Text_加载进度;
+    string ST_加载完成后要进入的场景名称 = "Scene_Main";
+    public int Int_加载总进度, Int_资源总数;
+    bool IS_临时用1, IS_临时用2, Is_正在加载资源中;
+
+    public List<Sprite> List_SP_已加载的图片组_首页按钮图;
+
+    //单个文件夹下的所有图片
+    public List<C_图文字典_SP> List_已加载的图文字典_SP = new List<C_图文字典_SP>();
+    //多个文件夹下的所有图片  分别存到list
+    public List<C_List图文字典_SP> List_已加载的图文字典List_SP = new List<C_List图文字典_SP>();
+
+
+    //单个文件夹下的所有音频
+    public List<C_音频字典_AUD> List_已加载音文字典_AUD = new List<C_音频字典_AUD>();
+    //多个文件夹下的所有音频  分别存到list
+    public List<C_List音文字典_AUD> List_已加载的音文字典List_AUD = new List<C_List音文字典_AUD>();
+
+
+    //单个文件夹下的所有音频
+    public List<C_视频字典_VD> List_已加载视频字典_VD = new List<C_视频字典_VD>();
+    //多个文件夹下的所有音频  分别存到list
+    public List<C_List视频字典_VD> List_已加载的视频字典List_VD = new List<C_List视频字典_VD>();
+
+
+
+    void Awake()
+    {
+        if (INS == null) { INS = this; DontDestroyOnLoad(this.gameObject); } else { Destroy(this.gameObject); }
+    }
+
+    void Start()
+    {
+
+       // StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有图片("/照片墙相关/出口"));
+        // StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有文件夹的图片并分组存到list("/照片墙相关"));
+
+        //StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有音频("/音频示例/1"));
+        //StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有文件夹的音频并分组存到list("/音频示例"));
+
+        //StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有视频("/AVProVideoSamples/1"));
+        // StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有文件夹的视频并分组存到list("/AVProVideoSamples"));
+
+        //for (int i = 0; i < List_已加载的图文字典_SP.Count; i++)
+        //{
+        //    List_SP_已加载的图片组_首页按钮图.Add(List_已加载的图文字典_SP[i].SP);
+        //}
+    }
+
+    void Update()
+    {
+
+        if (Int_资源总数 > 0)
+        {
+            Is_正在加载资源中 = true;
+        }
+        else
+        {
+            if (IS_临时用2 == false)
+            {
+                print("未加载资源");
+                Text_提示文本.text = "";
+                Text_加载进度.text = "";
+
+                Is_正在加载资源中 = false;
+                Panel_加载界面.gameObject.SetActive(false);
+                SceneManager.LoadScene(ST_加载完成后要进入的场景名称);
+                IS_临时用2 = true;
+            }
+
+        }
+
+        if (Is_正在加载资源中)
+        {
+            Text_加载进度.text = ((int)(((float)Int_加载总进度 / (float)Int_资源总数) * 100)).ToString() + "%";
+            if (Int_加载总进度 == Int_资源总数)
+            {
+                Text_提示文本.text = "加载完成";
+                if (IS_临时用1 == false)
+                {
+                    Is_正在加载资源中 = false;
+                    StartCoroutine(IE_加载完成后(0.5f));
+                    IS_临时用1 = true;
+                }
+            }
+            else
+            {
+                Text_提示文本.text = "加载资源中…";
+            }
+        }
+
+    }
+
+
+    #region 加载图片
+
+
+    [Serializable]
+    public class C_图文字典_SP
+    {
+        public string ST_图片名;
+        public Sprite SP;
+    }
+    //示例  StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有图片("/照片墙相关/出口"));
+    IEnumerator IE_IOLoadAssets_获取某文件夹下的所有图片(string 路径)
+    {
+
+        Text_提示文本.text = "加载资源中……";
+        string Texture_filePath = Application.streamingAssetsPath + 路径;
+        var result = Directory.GetFiles(Texture_filePath);
+        string[] filePaths = result.Where(item => item.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || item.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || item.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)).ToArray();
+
+        int Int_此路径的资源总数 = filePaths.Length;
+        int int_此路径资源加载进度 = 0;
+        Int_资源总数 += Int_此路径的资源总数;
+
+        Array.Clear(result, 0, result.Length);
+        WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
+
+        for (int i = 0; i < Int_此路径的资源总数; i++)
+        {
+
+            string str = filePaths[i].Replace(Texture_filePath + Path.DirectorySeparatorChar, "");
+            str = Tools_SJJ.INS.ST_去掉扩展名(str);
+            byte[] bytes = File.ReadAllBytes(filePaths[i]);
+            Texture2D texture = new Texture2D(1, 1);
+            texture.LoadImage(bytes);
+            Sprite SP = Tools_SJJ.INS.SP_转换的图片(texture);
+            C_图文字典_SP c_图文字典 = new C_图文字典_SP();
+            c_图文字典.ST_图片名 = str;
+            c_图文字典.SP = SP;
+            List_已加载的图文字典_SP.Add(c_图文字典);
+
+            int_此路径资源加载进度 = i + 1;
+            Int_加载总进度 += 1;
+            yield return waitForEndOfFrame;
+        }
+
+        Tools_SJJ.INS.对List内元素进行数字排序(List_已加载的图文字典_SP, entry => entry.ST_图片名);
+
+    }
+
+
+
+
+    [Serializable]
+    public class C_List图文字典_SP
+    {
+        public string ST_文件夹名;
+        public List<string> List_ST_图片名;
+        public List<Sprite> List_SP;
+    }
+    //示例     StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有文件夹的图片并分组存到list("/照片墙相关"));
+    IEnumerator IE_IOLoadAssets_获取某文件夹下的所有文件夹的图片并分组存到list(string 路径)
+    {
+        Text_提示文本.text = "加载资源中……";
+
+        // 获取主文件夹路径
+        string mainFolderPath = Application.streamingAssetsPath + 路径;
+
+        // 获取所有子文件夹路径
+        string[] subDirectories = Directory.GetDirectories(mainFolderPath);
+
+
+        for (int i = 0; i < subDirectories.Length; i++)
+        {
+            string[] filePaths = Directory.GetFiles(subDirectories[i])
+                .Where(file => file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            Int_资源总数 += filePaths.Length;
+        }
+
+        // 遍历每个子文件夹
+        for (int i = 0; i < subDirectories.Length; i++)
+        {
+            string subDir = subDirectories[i];
+
+            // 创建一个新的 C_List图文字典_SP 对象来存储当前子文件夹的图片
+            C_List图文字典_SP c_list图文字典 = new C_List图文字典_SP
+            {
+                ST_文件夹名 = Path.GetFileName(subDir), // 存储文件夹名称
+                List_ST_图片名 = new List<string>(),
+                List_SP = new List<Sprite>()
+            };
+
+            // 获取当前子文件夹内的图片文件
+            string[] filePaths = Directory.GetFiles(subDir)
+                .Where(file => file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
+
+            // 遍历当前子文件夹中的每个图片文件
+            for (int j = 0; j < filePaths.Length; j++)
+            {
+                string filePath = filePaths[j];
+
+                // 读取文件名并去掉扩展名
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+
+                // 读取图片并转换为 Sprite
+                byte[] bytes = File.ReadAllBytes(filePath);
+                Texture2D texture = new Texture2D(1, 1);
+                texture.LoadImage(bytes);
+                Sprite sprite = Tools_SJJ.INS.SP_转换的图片(texture);
+
+                // 将图片名称和 Sprite 添加到当前子文件夹的列表中
+                c_list图文字典.List_ST_图片名.Add(fileName);
+                c_list图文字典.List_SP.Add(sprite);
+
+
+                Int_加载总进度 += 1;
+
+                // 实时更新进度信息
+                Text_加载进度.text = ((int)(((float)Int_加载总进度 / (float)Int_资源总数) * 100)).ToString() + "%";
+                yield return waitForEndOfFrame;
+            }
+
+            // 将当前子文件夹的 C_List图文字典_SP 对象添加到主列表中
+            List_已加载的图文字典List_SP.Add(c_list图文字典);
+        }
+
+        // 对主列表中的文件夹按照文件夹名称中的数字顺序排序
+        Tools_SJJ.INS.对List内元素进行数字排序(List_已加载的图文字典List_SP, entry => entry.ST_文件夹名);
+
+        // 对每个子文件夹内的图片名称列表进行排序
+        foreach (var folder in List_已加载的图文字典List_SP)
+        {
+            Tools_SJJ.INS.对List内元素进行数字排序(folder.List_ST_图片名, name => name);
+        }
+
+    }
+
+    #endregion
+
+
+
+    #region 加载音频
+
+    [Serializable]
+    public class C_音频字典_AUD
+    {
+        public string ST_音频名;
+        public AudioClip AUD;
+    }
+
+    // 示例   StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有音频("/音频相关/1"));
+    IEnumerator IE_IOLoadAssets_获取某文件夹下的所有音频(string ST_路径)
+    {
+        Text_提示文本.text = "加载资源中……";
+        string audioFilePath = Application.streamingAssetsPath + ST_路径;
+        var result = Directory.GetFiles(audioFilePath);
+        string[] filePaths = result.Where(item => item.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) || item.EndsWith(".wav", StringComparison.OrdinalIgnoreCase) || item.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) || item.EndsWith(".flac", StringComparison.OrdinalIgnoreCase)).ToArray();
+
+        int Int_此路径的资源总数 = filePaths.Length;
+        int int_此路径资源加载进度 = 0;
+        Int_资源总数 += Int_此路径的资源总数;
+
+        Array.Clear(result, 0, result.Length);
+        WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
+
+        for (int i = 0; i < Int_此路径的资源总数; i++)
+        {
+            string filePath = filePaths[i];
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            string extension = Path.GetExtension(filePath).ToLower();
+            AudioType audioType = AudioType.UNKNOWN;
+
+            switch (extension)
+            {
+                case ".mp3":
+                    audioType = AudioType.MPEG;
+                    break;
+                case ".wav":
+                    audioType = AudioType.WAV;
+                    break;
+                case ".ogg":
+                    audioType = AudioType.OGGVORBIS;
+                    break;
+                case ".flac":
+                    audioType = AudioType.AUDIOQUEUE;
+                    break;
+
+
+            }
+
+            using (UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip("file://" + filePath, audioType))
+            {
+                yield return request.SendWebRequest();
+
+                if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+                {
+                    Debug.LogError("Error loading audio: " + request.error);
+                }
+                else
+                {
+                    AudioClip audioClip = DownloadHandlerAudioClip.GetContent(request);
+                    C_音频字典_AUD c_音频字典 = new C_音频字典_AUD();
+                    c_音频字典.ST_音频名 = fileName;
+                    c_音频字典.AUD = audioClip;
+                    List_已加载音文字典_AUD.Add(c_音频字典);
+
+                    int_此路径资源加载进度 = i + 1;
+                    Int_加载总进度 += 1;
+                    yield return waitForEndOfFrame;
+                }
+            }
+        }
+
+        Tools_SJJ.INS.对List内元素进行数字排序(List_已加载音文字典_AUD, entry => entry.ST_音频名);
+    }
+
+
+
+
+    [Serializable]
+    public class C_List音文字典_AUD
+    {
+        public string ST_文件夹名;
+        public List<string> List_ST_音频名;
+        public List<AudioClip> List_AUD;
+    }
+
+    // 示例     StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有文件夹的音频并分组存到list("/音频相关"));
+    IEnumerator IE_IOLoadAssets_获取某文件夹下的所有文件夹的音频并分组存到list(string 路径)
+    {
+        Text_提示文本.text = "加载资源中……";
+
+        // 获取主文件夹路径
+        string mainFolderPath = Application.streamingAssetsPath + 路径;
+
+        // 获取所有子文件夹路径
+        string[] subDirectories = Directory.GetDirectories(mainFolderPath);
+
+        for (int i = 0; i < subDirectories.Length; i++)
+        {
+            string[] filePaths = Directory.GetFiles(subDirectories[i])
+                .Where(file => file.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".wav", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".flac", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            Int_资源总数 += filePaths.Length;
+        }
+
+        // 遍历每个子文件夹
+        for (int i = 0; i < subDirectories.Length; i++)
+        {
+            string subDir = subDirectories[i];
+
+            // 创建一个新的 C_List音频字典_AUD 对象来存储当前子文件夹的音频
+            C_List音文字典_AUD c_list音频字典 = new C_List音文字典_AUD
+            {
+                ST_文件夹名 = Path.GetFileName(subDir), // 存储文件夹名称
+                List_ST_音频名 = new List<string>(),
+                List_AUD = new List<AudioClip>()
+            };
+
+            // 获取当前子文件夹内的音频文件
+            string[] filePaths = Directory.GetFiles(subDir)
+                .Where(file => file.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".wav", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".flac", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
+
+            // 遍历当前子文件夹中的每个音频文件
+            for (int j = 0; j < filePaths.Length; j++)
+            {
+                string filePath = filePaths[j];
+
+                // 读取文件名并去掉扩展名
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+                string extension = Path.GetExtension(filePath).ToLower();
+                AudioType audioType = AudioType.UNKNOWN;
+
+                switch (extension)
+                {
+                    case ".mp3":
+                        audioType = AudioType.MPEG;
+                        break;
+                    case ".wav":
+                        audioType = AudioType.WAV;
+                        break;
+                    case ".ogg":
+                        audioType = AudioType.OGGVORBIS;
+                        break;
+                    case ".flac":
+                        audioType = AudioType.AUDIOQUEUE;
+                        break;
+                }
+
+                using (UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip("file://" + filePath, audioType))
+                {
+                    yield return request.SendWebRequest();
+
+                    if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+                    {
+                        Debug.LogError("Error loading audio: " + request.error);
+                    }
+                    else
+                    {
+                        AudioClip audioClip = DownloadHandlerAudioClip.GetContent(request);
+
+                        // 将音频名称和 AudioClip 添加到当前子文件夹的列表中
+                        c_list音频字典.List_ST_音频名.Add(fileName);
+                        c_list音频字典.List_AUD.Add(audioClip);
+
+                        Int_加载总进度 += 1;
+
+                        // 实时更新进度信息
+                        Text_加载进度.text = ((int)(((float)Int_加载总进度 / (float)Int_资源总数) * 100)).ToString() + "%";
+                        yield return waitForEndOfFrame;
+                    }
+                }
+            }
+
+            // 将当前子文件夹的 C_List音频字典_AUD 对象添加到主列表中
+            List_已加载的音文字典List_AUD.Add(c_list音频字典);
+        }
+
+        // 对主列表中的文件夹按照文件夹名称中的数字顺序排序
+        Tools_SJJ.INS.对List内元素进行数字排序(List_已加载的音文字典List_AUD, entry => entry.ST_文件夹名);
+
+        // 对每个子文件夹内的音频名称列表进行排序
+        foreach (var folder in List_已加载的音文字典List_AUD)
+        {
+            Tools_SJJ.INS.对List内元素进行数字排序(folder.List_ST_音频名, name => name);
+        }
+    }
+
+    #endregion
+
+
+
+    #region 加载视频
+
+    [Serializable]
+    public class C_视频字典_VD
+    {
+        public string ST_视频名;
+        public MediaPlayer MP;
+    }
+    IEnumerator IE_IOLoadAssets_获取某文件夹下的所有视频(string 路径)
+    {
+        Text_提示文本.text = "加载资源中……";
+        string videoFilePath = Application.streamingAssetsPath + 路径;
+        var result = Directory.GetFiles(videoFilePath);
+        string[] filePaths = result.Where(item => item.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ||
+                                                  item.EndsWith(".avi", StringComparison.OrdinalIgnoreCase) ||
+                                                  item.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)).ToArray();
+
+        int Int_此路径的资源总数 = filePaths.Length;
+        Int_资源总数 += Int_此路径的资源总数;
+
+        Array.Clear(result, 0, result.Length);
+        WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
+
+        for (int i = 0; i < Int_此路径的资源总数; i++)
+        {
+            string filePath = filePaths[i];
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                // 将文件路径格式化为相对路径，并替换反斜杠为正斜杠
+                string relativePath = filePath.Replace(Application.streamingAssetsPath + "/", "").Replace("\\", "/");
+                GameObject go = Instantiate(G_PRE_MP, transform);
+                go.GetComponent<MediaPlayer>().OpenMedia(new MediaPath(relativePath, MediaPathType.RelativeToStreamingAssetsFolder), autoPlay: false);
+
+                C_视频字典_VD c_视频字典 = new C_视频字典_VD
+                {
+                    ST_视频名 = fileName,
+                    MP = go.GetComponent<MediaPlayer>()
+                };
+
+                List_已加载视频字典_VD.Add(c_视频字典);
+            }
+
+            Int_加载总进度 += 1;
+
+            // 实时更新进度信息
+            Text_加载进度.text = ((int)(((float)Int_加载总进度 / (float)Int_资源总数) * 100)).ToString() + "%";
+            yield return waitForEndOfFrame;
+        }
+
+        // 对视频列表进行排序
+        Tools_SJJ.INS.对List内元素进行数字排序(List_已加载视频字典_VD, entry => entry.ST_视频名);
+    }
+
+
+
+
+
+
+    [Serializable]
+    public class C_List视频字典_VD
+    {
+        public string ST_文件夹名;
+        public List<string> List_ST_视频名;
+        public List<MediaPlayer> List_MP;
+    }
+
+    // 示例 StartCoroutine(IE_IOLoadAssets_获取某文件夹下的所有文件夹的视频并分组存到list("/视频相关"));
+    IEnumerator IE_IOLoadAssets_获取某文件夹下的所有文件夹的视频并分组存到list(string 路径)
+    {
+        Text_提示文本.text = "加载资源中……";
+
+        // 获取主文件夹路径
+        string mainFolderPath = Application.streamingAssetsPath + 路径;
+
+        // 获取所有子文件夹路径
+        string[] subDirectories = Directory.GetDirectories(mainFolderPath);
+
+        if (subDirectories.Length == 0)
+        {
+            print(路径 + "没有子文件夹");
+            yield break;
+        }
+
+        for (int i = 0; i < subDirectories.Length; i++)
+        {
+            string[] filePaths = Directory.GetFiles(subDirectories[i])
+                .Where(file => file.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".avi", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".mov", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            Int_资源总数 += filePaths.Length;
+        }
+
+        // 遍历每个子文件夹
+        for (int i = 0; i < subDirectories.Length; i++)
+        {
+            string subDir = subDirectories[i];
+
+            // 创建一个新的 C_List视频字典_AUD 对象来存储当前子文件夹的视频
+            C_List视频字典_VD c_list视频字典 = new C_List视频字典_VD
+            {
+                ST_文件夹名 = Path.GetFileName(subDir), // 存储文件夹名称
+                List_ST_视频名 = new List<string>(),
+                List_MP = new List<MediaPlayer>()
+            };
+
+            // 获取当前子文件夹内的视频文件
+            string[] filePaths = Directory.GetFiles(subDir)
+                .Where(file => file.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".avi", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".mov", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
+
+            // 遍历当前子文件夹中的每个视频文件
+            for (int j = 0; j < filePaths.Length; j++)
+            {
+                string filePath = filePaths[j];
+
+                // 读取文件名并去掉扩展名
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+                if (!string.IsNullOrEmpty(filePath))
+                {
+                    // 将文件路径格式化为相对路径，并替换反斜杠为正斜杠
+                    string relativePath = filePath.Replace(Application.streamingAssetsPath + "/", "").Replace("\\", "/");
+                    GameObject go = Instantiate(G_PRE_MP, transform);
+                    go.GetComponent<MediaPlayer>().OpenMedia(new MediaPath(relativePath, MediaPathType.RelativeToStreamingAssetsFolder), autoPlay: false);
+                    c_list视频字典.List_ST_视频名.Add(fileName);
+                    c_list视频字典.List_MP.Add(go.GetComponent<MediaPlayer>());
+                }
+
+                Int_加载总进度 += 1;
+
+                // 实时更新进度信息
+                Text_加载进度.text = ((int)(((float)Int_加载总进度 / (float)Int_资源总数) * 100)).ToString() + "%";
+                yield return waitForEndOfFrame;
+            }
+
+            // 将当前子文件夹的 C_List视频字典_AUD 对象添加到主列表中
+            List_已加载的视频字典List_VD.Add(c_list视频字典);
+        }
+
+        // 对主列表中的文件夹按照文件夹名称中的数字顺序排序
+        Tools_SJJ.INS.对List内元素进行数字排序(List_已加载的视频字典List_VD, entry => entry.ST_文件夹名);
+
+        // 对每个子文件夹内的视频名称列表进行排序
+        foreach (var folder in List_已加载的视频字典List_VD)
+        {
+            Tools_SJJ.INS.对List内元素进行数字排序(folder.List_ST_视频名, name => name);
+        }
+    }
+
+    #endregion
+
+
+
+
+    IEnumerator IE_加载完成后(float F_延时)
+    {
+
+        yield return new WaitForSeconds(F_延时);
+        Panel_加载界面.gameObject.SetActive(false);
+        SceneManager.LoadScene(ST_加载完成后要进入的场景名称);
+
+    }
+}
+
