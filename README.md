@@ -1,1 +1,1 @@
-# SimpleUnityScriptHub
+# UnityScriptHub
