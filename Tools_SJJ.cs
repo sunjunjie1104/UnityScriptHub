@@ -20,6 +20,8 @@ using UnityEngine.Rendering;
 using Microsoft.Win32;
 using WindowsInput;
 using OfficeOpenXml;
+using System.Linq;
+
 
 
 
@@ -1092,7 +1094,8 @@ public class Tools_SJJ : MonoBehaviour
         {
             打开外部文件(ST_程序窗口1_名字, ST_程序窗口1_路径);
             打开Quicker动作(ST_程序窗口1_Quicker动作ID);
-        }else
+        }
+        else
         if (a == ST_程序窗口2_UDP消息)
         {
             打开外部文件(ST_程序窗口2_名字, ST_程序窗口2_路径);
@@ -1218,11 +1221,7 @@ public class Tools_SJJ : MonoBehaviour
             // 根据名称获取工作表
             ExcelWorksheet 工作表1 = package.Workbook.Worksheets[1];
 
-            if (工作表1 == null)
-            {
-                print("找不到指定的工作表：");
-
-            }
+            if (工作表1 == null) { print("找不到指定的工作表："); }
 
             // 找到有内容的范围
             ExcelRange range = 工作表1.Cells[工作表1.Dimension.Address];
@@ -1243,9 +1242,7 @@ public class Tools_SJJ : MonoBehaviour
 
                         // 更新有内容的总列数
                         有内容的总列数 = Mathf.Max(有内容的总列数, Int_当前读取列);
-
                         hasContentInRow = true;
-
                     }
                 }
 
@@ -1344,7 +1341,74 @@ public class Tools_SJJ : MonoBehaviour
         }
     }
 
-    
+    public int Int_获取表格某列的总行数(string 路径和表格名, int 列, int 表几 = 1)
+    {
+        string _filePath = Application.streamingAssetsPath + 路径和表格名 + ".xlsx";
+        FileInfo _excelName = new FileInfo(_filePath);
+
+        // 使用 ExcelPackage 打开文件
+        using (ExcelPackage package = new ExcelPackage(_excelName))
+        {
+            // 获取指定的工作表
+            ExcelWorksheet 工作表1 = package.Workbook.Worksheets[表几];
+
+            if (工作表1 == null)
+            {
+                print("找不到指定的工作表：" + 路径和表格名);
+                return 0;
+            }
+            else
+            {
+                int 总行数 = 0;
+
+                // 获取工作表的最大行数
+                int 最大行数 = 工作表1.Dimension.End.Row;
+
+                // 遍历指定列，统计有内容的单元格数
+                for (int 行 = 1; 行 <= 最大行数; 行++)
+                {
+                    if (工作表1.Cells[行, 列].Value != null && 工作表1.Cells[行, 列].Value.ToString().Trim() != "")
+                    {
+                        总行数++;
+                       
+                    }
+                }
+
+                return 总行数;
+            }
+        }
+    }
+
+    public List<string> List_ST_获取某列中某行及以下的数据(string 路径和表格名, int 列, int 起始行, int 表几 = 1)
+    {
+        List<string> List_ST = new List<string>();
+        string _filePath = Application.streamingAssetsPath + 路径和表格名 + ".xlsx";
+        FileInfo _excelName = new FileInfo(_filePath);
+        // 通过ExcelPackage打开文件
+        using (ExcelPackage package = new ExcelPackage(_excelName))
+        {
+            // 根据名称获取工作表
+            ExcelWorksheet 工作表1 = package.Workbook.Worksheets[表几];
+
+            if (工作表1 == null)
+            {
+                print("找不到指定的工作表：" + 路径和表格名);
+                return List_ST;
+            }
+            else
+            {
+                int aa = Int_获取表格总行数(路径和表格名, 列);
+                for (int i = 起始行; i <= aa; i++)
+                {
+          
+                    List_ST.Add(工作表1.Cells[i, 列].Value.ToString());
+                }
+                return List_ST;
+            }
+
+        }
+    }
+
 
     #endregion
 
@@ -1629,7 +1693,7 @@ public static class RedAutoRunSomeScene
         if (File.Exists(filePath))
         {
             string content = File.ReadAllText(filePath);
-           // StartSceneName = content;
+            // StartSceneName = content;
         }
         else
         {
