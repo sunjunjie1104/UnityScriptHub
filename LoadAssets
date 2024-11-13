@@ -78,8 +78,7 @@ public class LoadAssets : MonoBehaviour
                 Text_加载进度.text = "";
 
                 Is_正在加载资源中 = false;
-                Panel_加载界面.gameObject.SetActive(false);
-                SceneManager.LoadScene(ST_加载完成后要进入的场景名称);
+              StartCoroutine(IE_加载完成后(0));
                 IS_临时用2 = true;
             }
 
