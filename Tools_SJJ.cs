@@ -1344,7 +1344,7 @@ public class Tools_SJJ : MonoBehaviour
         }
     }
 
-
+    
 
     #endregion
 
@@ -1499,6 +1499,7 @@ public class Tools_SJJ : MonoBehaviour
 }
 
 
+
 #region 帧数
 public class FPSDisplay : MonoBehaviour
 {
@@ -1564,28 +1565,19 @@ public class FPSDisplay : MonoBehaviour
 
 #if UNITY_EDITOR
 [InitializeOnLoad]
+
 public static class RedAutoRunSomeScene
 {
     public static string filePath = "Red/Setting/AutoLoadSceneName.txt";
-    public static string StartSceneName = "StartScene";
-    public const string MenuName = "Tools/自动运行初始场景";
-    public static bool isLoadStartScene = true; // 默认设为true
+    public static string StartSceneName = "Scene_Main";
+
 
     static RedAutoRunSomeScene()
     {
-        InitializeMenuState();
-        //  UnityEngine.Debug.Log(isLoadStartScene);
-
         EditorApplication.playModeStateChanged += OnPlayerModeStateChanged;
     }
-    [InitializeOnLoadMethod]
 
-    private static void InitializeMenuState()
-    {
-        isLoadStartScene = true;
-        Menu.SetChecked(MenuName, isLoadStartScene);
-        EditorPrefs.SetBool(MenuName, isLoadStartScene);
-    }
+
     private static void OnPlayerModeStateChanged(PlayModeStateChange playModeState)
     {
         if (playModeState != PlayModeStateChange.ExitingEditMode)
@@ -1593,13 +1585,10 @@ public static class RedAutoRunSomeScene
             return;
         }
         var currentStartScene = EditorSceneManager.GetActiveScene();
-        if (isLoadStartScene)
+        if (currentStartScene.name == StartSceneName)
         {
-            if (currentStartScene.name != StartSceneName)
-            {
-                var targetScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(EditorBuildSettings.scenes[0].path);
-                EditorSceneManager.playModeStartScene = targetScene;
-            }
+            var targetScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(EditorBuildSettings.scenes[0].path);
+            EditorSceneManager.playModeStartScene = targetScene;
         }
         else
         {
@@ -1608,14 +1597,6 @@ public static class RedAutoRunSomeScene
         }
     }
 
-    [MenuItem(MenuName)]
-    public static void ToggleRunStartScene()
-    {
-        isLoadStartScene = !isLoadStartScene;
-        Menu.SetChecked(MenuName, isLoadStartScene);
-        // 保存勾选状态到 EditorPrefs
-        EditorPrefs.SetBool(MenuName, isLoadStartScene);
-    }
 
     static bool ValidatePlayModeUseFirstScene()
     {
@@ -1648,7 +1629,7 @@ public static class RedAutoRunSomeScene
         if (File.Exists(filePath))
         {
             string content = File.ReadAllText(filePath);
-            StartSceneName = content;
+           // StartSceneName = content;
         }
         else
         {
