@@ -20,8 +20,6 @@ using UnityEngine.Rendering;
 using Microsoft.Win32;
 using WindowsInput;
 using OfficeOpenXml;
-using System.Linq;
-
 
 
 
@@ -327,6 +325,28 @@ public class Tools_SJJ : MonoBehaviour
 
 
     #region  小方法
+
+    public GameObject G_在鼠标指针处生成对象(GameObject G_预制体)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        // Figure out where the ground is
+        if (Physics.Raycast(ray, out var hit, Mathf.Infinity, ~0))
+        {
+            Vector3 p = hit.point ;
+            var rot = Quaternion.identity;
+            GameObject obj = Instantiate(G_预制体, p, rot);
+            return obj;
+
+        }
+        else
+        {
+            return null;
+        }
+
+    }
+
+
 
 
     //示例   Tools_SJJ.INS.EVENT_OnClick.AddListener( () => { Tools_SJJ.INS.打印对象组(Tools_SJJ.INS.List_G_点击获取的物体组); });
@@ -1684,7 +1704,7 @@ public static class RedAutoRunSomeScene
 
     static void LoadSceneName()
     {
-        string directoryPath = Path.GetDirectoryName(filePath);
+        string directoryPath = System.IO.Path.GetDirectoryName(filePath);
         if (!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);
