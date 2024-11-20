@@ -333,7 +333,7 @@ public class Tools_SJJ : MonoBehaviour
         // Figure out where the ground is
         if (Physics.Raycast(ray, out var hit, Mathf.Infinity, ~0))
         {
-            Vector3 p = hit.point ;
+            Vector3 p = hit.point;
             var rot = Quaternion.identity;
             GameObject obj = Instantiate(G_预制体, p, rot);
             return obj;
@@ -1390,7 +1390,7 @@ public class Tools_SJJ : MonoBehaviour
                     if (工作表1.Cells[行, 列].Value != null && 工作表1.Cells[行, 列].Value.ToString().Trim() != "")
                     {
                         总行数++;
-                       
+
                     }
                 }
 
@@ -1420,7 +1420,7 @@ public class Tools_SJJ : MonoBehaviour
                 int aa = Int_获取表格总行数(路径和表格名, 列);
                 for (int i = 起始行; i <= aa; i++)
                 {
-          
+
                     List_ST.Add(工作表1.Cells[i, 列].Value.ToString());
                 }
                 return List_ST;
@@ -1990,14 +1990,15 @@ public class TurboRename : EditorWindow
 
 #region 显示模型面数
 
-
-[InitializeOnLoad]  // 保证在 Unity 加载时注册事件
+#if UNITY_EDITOR
+[InitializeOnLoad]
 public class MeshInfoEditor
 {
     // 注册选择物体事件
     static MeshInfoEditor()
     {
-        Selection.selectionChanged += OnSelectionChanged;
+        //是否启用显示面数的功能
+        // Selection.selectionChanged += OnSelectionChanged;
     }
 
     private static void OnSelectionChanged()
@@ -2018,6 +2019,7 @@ public class MeshInfoEditor
     {
         return number >= 10000 ? $"{number / 10000f:F1}万" : number.ToString();
     }
+
     // 获取物体的网格信息
     private static MeshInfo GetMeshInfo(GameObject selectedObject)
     {
@@ -2029,7 +2031,6 @@ public class MeshInfoEditor
         {
             if (meshFilter.sharedMesh != null)
             {
-                
                 totalVertices += meshFilter.sharedMesh.vertexCount;
                 totalTriangles += meshFilter.sharedMesh.triangles.Length / 3;
             }
@@ -2049,7 +2050,7 @@ public class MeshInfoEditor
         public int TriangleCount;
     }
 }
-
+#endif
 #endregion
 
 
