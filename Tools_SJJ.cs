@@ -1991,14 +1991,58 @@ public class TurboRename : EditorWindow
 #region 显示模型面数
 
 #if UNITY_EDITOR
+
+
 [InitializeOnLoad]
 public class MeshInfoEditor
 {
-    // 注册选择物体事件
+    private const string ToggleKey = "ShowMeshInfoToggle"; // 用于保存 Toggle 状态的键
+
+    // 静态构造函数
     static MeshInfoEditor()
     {
-        //是否启用显示面数的功能
-        // Selection.selectionChanged += OnSelectionChanged;
+        // 根据保存的状态决定是否启用功能
+        if (EditorPrefs.GetBool(ToggleKey, false))
+        {
+            Selection.selectionChanged += OnSelectionChanged;
+        }
+    }
+
+    // 添加菜单项
+    [MenuItem("Tools/输出模型面数")]
+    private static void ToggleShowMeshInfo()
+    {
+        // 读取当前状态
+        bool currentState = EditorPrefs.GetBool(ToggleKey, false);
+
+        // 切换状态
+        bool newState = !currentState;
+
+        // 保存状态
+        EditorPrefs.SetBool(ToggleKey, newState);
+
+        // 注册或移除事件
+        if (newState)
+        {
+            Selection.selectionChanged += OnSelectionChanged;
+            UnityEngine.Debug.Log("输出模型面数功能开启");
+        }
+        else
+        {
+            Selection.selectionChanged -= OnSelectionChanged;
+            UnityEngine.Debug.Log("输出模型面数功能关闭");
+        }
+
+        // 更新菜单项状态
+        Menu.SetChecked("Tools/输出模型面数", newState);
+    }
+
+    // 初始化菜单项状态
+    [MenuItem("Tools/输出模型面数", true)]
+    private static bool ValidateToggleShowMeshInfo()
+    {
+        Menu.SetChecked("Tools/输出模型面数", EditorPrefs.GetBool(ToggleKey, false));
+        return true;
     }
 
     private static void OnSelectionChanged()
@@ -2051,6 +2095,8 @@ public class MeshInfoEditor
     }
 }
 #endif
+
+
 #endregion
 
 
