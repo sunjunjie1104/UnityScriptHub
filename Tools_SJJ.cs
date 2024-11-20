@@ -2029,6 +2029,7 @@ public class MeshInfoEditor
         {
             if (meshFilter.sharedMesh != null)
             {
+                
                 totalVertices += meshFilter.sharedMesh.vertexCount;
                 totalTriangles += meshFilter.sharedMesh.triangles.Length / 3;
             }
