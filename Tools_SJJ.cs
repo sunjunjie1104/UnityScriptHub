@@ -1988,3 +1988,125 @@ public class TurboRename : EditorWindow
 #endregion
 
 
+#region 显示模型面数
+
+[ExecuteInEditMode] // 允许在编辑模式下运行
+public class MeshInfoComponent : MonoBehaviour
+{
+    public int vertexCount; // 顶点数
+    public int triangleCount; // 三角形数
+}
+
+// 自定义Editor，处理GameObject的显示
+[CustomEditor(typeof(MeshInfoComponent))]
+public class MeshInfoInInspector : Editor
+{
+    [InitializeOnLoadMethod]
+    private static void InitializeOnLoad()
+    {
+        // 注册选中变化事件
+        Selection.selectionChanged += OnSelectionChanged;
+    }
+
+    private static void OnSelectionChanged()
+    {
+        if (!Application.isPlaying && Selection.activeGameObject != null)
+        {
+            GameObject selectedObject = Selection.activeGameObject;
+
+            // 如果选中的物体没有MeshInfoComponent，则添加
+            if (selectedObject.GetComponent<MeshInfoComponent>() == null)
+            {
+                selectedObject.AddComponent<MeshInfoComponent>();
+               // UnityEngine.Debug.Log($"已为 {selectedObject.name} 添加 MeshInfoComponent");
+            }
+        }
+    }
+
+    public override void OnInspectorGUI()
+    {
+        // 获取当前的 MeshInfoComponent
+        MeshInfoComponent meshInfoComponent = (MeshInfoComponent)target;
+
+        // 获取当前GameObject的网格信息
+        GameObject selectedObject = meshInfoComponent.gameObject;
+        MeshInfo meshInfo = GetMeshInfo(selectedObject);
+
+        // 设置 MeshInfoComponent 的网格信息
+        meshInfoComponent.vertexCount = meshInfo.VertexCount;
+        meshInfoComponent.triangleCount = meshInfo.TriangleCount;
+
+        // 显示网格信息在Inspector中
+        EditorGUILayout.LabelField("物体网格统计", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"Triangles三角形: {FormatNumber(meshInfoComponent.triangleCount)}",
+                                   $"Vertices顶点数: {FormatNumber(meshInfoComponent.vertexCount)}");
+
+        // 自动调整组件顺序，将当前组件移动到Transform组件下方
+        MoveComponentBelowTransform(meshInfoComponent);
+    }
+
+    // 获取网格信息
+    private MeshInfo GetMeshInfo(GameObject selectedObject)
+    {
+        int totalVertices = 0;
+        int totalTriangles = 0;
+
+        // 遍历当前GameObject及其子物体，统计MeshFilter中的网格信息
+        foreach (MeshFilter meshFilter in selectedObject.GetComponentsInChildren<MeshFilter>())
+        {
+            if (meshFilter.sharedMesh != null)
+            {
+                totalVertices += meshFilter.sharedMesh.vertexCount;
+                totalTriangles += meshFilter.sharedMesh.triangles.Length / 3;
+            }
+        }
+
+        return new MeshInfo
+        {
+            VertexCount = totalVertices,
+            TriangleCount = totalTriangles
+        };
+    }
+
+    // 格式化数字，超过一万时显示为 "万" 的形式
+    private string FormatNumber(int number)
+    {
+        return number >= 10000 ? $"{number / 10000f:F1}万" : number.ToString();
+    }
+
+    // 将当前组件移动到Transform组件下方
+    private void MoveComponentBelowTransform(MeshInfoComponent meshInfoComponent)
+    {
+        Component[] components = meshInfoComponent.gameObject.GetComponents<Component>();
+        int transformIndex = -1;
+        int meshInfoIndex = -1;
+
+        // 找到Transform和MeshInfoComponent的位置
+        for (int i = 0; i < components.Length; i++)
+        {
+            if (components[i] is Transform) transformIndex = i;
+            if (components[i] == meshInfoComponent) meshInfoIndex = i;
+        }
+
+        // 如果Transform在MeshInfoComponent上方，进行交换
+        if (transformIndex != -1 && meshInfoIndex != -1 && transformIndex < meshInfoIndex)
+        {
+            for (int i = meshInfoIndex; i > transformIndex + 1; i--)
+            {
+                UnityEditorInternal.ComponentUtility.MoveComponentUp(meshInfoComponent);
+            }
+        }
+    }
+
+    // 用于存储网格信息的结构体
+    private struct MeshInfo
+    {
+        public int VertexCount; // 顶点数
+        public int TriangleCount; // 三角形数
+    }
+}
+
+
+#endregion
+
+
