@@ -20,6 +20,10 @@ using UnityEngine.Rendering;
 using Microsoft.Win32;
 using WindowsInput;
 using OfficeOpenXml;
+using UnityEngine.SceneManagement;
+using System.Reflection;
+
+
 
 
 
@@ -1420,8 +1424,10 @@ public class Tools_SJJ : MonoBehaviour
                 int aa = Int_获取表格总行数(路径和表格名, 列);
                 for (int i = 起始行; i <= aa; i++)
                 {
-
-                    List_ST.Add(工作表1.Cells[i, 列].Value.ToString());
+                    if (工作表1.Cells[i, 列].Value != null)
+                    {
+                        List_ST.Add(工作表1.Cells[i, 列].Value.ToString());
+                    }
                 }
                 return List_ST;
             }
@@ -1429,7 +1435,20 @@ public class Tools_SJJ : MonoBehaviour
         }
     }
 
-
+    public void 添加表格数据到List_String(object cellValue, List<string> list)
+    {
+        if (cellValue != null)
+        {
+            list.Add(cellValue.ToString());
+        }
+    }
+    public void 添加表格数据到List_INT(object cellValue, List<int> list)
+    {
+        if (cellValue != null)
+        {
+            list.Add(int.Parse(cellValue.ToString()));
+        }
+    }
     #endregion
 
 
@@ -1704,6 +1723,7 @@ public static class RedAutoRunSomeScene
 
     static void LoadSceneName()
     {
+
         string directoryPath = System.IO.Path.GetDirectoryName(filePath);
         if (!Directory.Exists(directoryPath))
         {
@@ -1781,7 +1801,7 @@ public class TurboRename : EditorWindow
     GameObject[] SelectedGameObjectObjects = new GameObject[0];
     string[] PreviewSelectedObjects = new string[0];
 
-    bool usebasename;
+    bool usebasename=true;
     string basename;
     bool useprefix;
     string prefix;
@@ -1789,8 +1809,8 @@ public class TurboRename : EditorWindow
     string suffix;
 
     public NumberedMethod numbermeth;
-    bool usenumbered;
-    int basenumbered = 0;
+    bool usenumbered=true;
+    int basenumbered = 1;
     int stepnumbered = 1;
 
     bool usereplace;
@@ -2094,9 +2114,132 @@ public class MeshInfoEditor
         public int TriangleCount;
     }
 }
+
 #endif
 
 
+#endregion
+
+
+
+#region 切换场景后自动展开Hierarchy根目录
+#if UNITY_EDITOR
+
+
+
+
+
+
+[InitializeOnLoad]
+public static class HierarchyAutoExpand
+{
+    static HierarchyAutoExpand()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        //   EditorApplication.hierarchyWindowItemOnGUI += HierarchyWindowItemOnGUI;
+
+    }
+
+
+    private static void HierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
+    {
+        GameObject gameObject = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+        if (gameObject != null && gameObject.scene.name == null)
+        {
+            Rect rect = new Rect(selectionRect);
+            rect.x = rect.width - 20;
+            rect.width = 20;
+            if (GUI.Button(rect, "D"))
+            {
+                Selection.activeGameObject = gameObject;
+                EditorGUIUtility.PingObject(gameObject);
+                EditorApplication.ExecuteMenuItem("Window/General/Hierarchy");
+            }
+        }
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // 在场景完全加载后延迟一小段时间再执行展开操作，确保所有初始化完毕
+        EditorApplication.delayCall += () =>
+        {
+            // 延迟0.5秒执行，确保场景完全稳定
+            EditorApplication.delayCall += ExpandHierarchy;
+        };
+    }
+
+    private static void ExpandHierarchy()
+    {
+        // 获取当前场景中的所有根对象
+        var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
+
+        foreach (var rootObject in rootObjects)
+        {
+            // 展开根对象
+            SetExpandedRecursive(rootObject, true);
+        }
+    }
+
+    private static void SetExpandedRecursive(GameObject gameObject, bool expand)
+    {
+        // 设置对象的展开状态
+        EditorGUIUtility.PingObject(gameObject);
+        EditorApplication.ExecuteMenuItem("Window/General/Hierarchy");
+
+    }
+
+
+
+
+}
+
+//[InitializeOnLoad]
+//public static class HierarchyAutoExpand
+//{
+//    static HierarchyAutoExpand()
+//    {
+//        SceneManager.sceneLoaded += OnSceneLoaded;
+//    }
+
+//    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+//    {
+//        // 在场景完全加载后延迟一小段时间再执行展开操作，确保所有初始化完毕
+//        EditorApplication.delayCall += () =>
+//        {
+//            // 延迟0.5秒执行，确保场景完全稳定
+//            EditorApplication.delayCall += ExpandHierarchy;
+//        };
+//    }
+
+//    private static void ExpandHierarchy()
+//    {
+//        // 获取当前场景中的所有根对象
+//        var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
+
+//        foreach (var rootObject in rootObjects)
+//        {
+//            // 展开根对象
+//            SetExpandedRecursive(rootObject, true);
+//        }
+//    }
+
+//    private static void SetExpandedRecursive(GameObject gameObject, bool expand)
+//    {
+//        // 设置对象的展开状态
+//        EditorGUIUtility.PingObject(gameObject);
+//        EditorApplication.ExecuteMenuItem("Window/General/Hierarchy");
+
+//        // 递归展开子对象
+//        foreach (Transform child in gameObject.transform)
+//        {
+//            //  SetExpandedRecursive(child.gameObject, expand);
+//        }
+//    }
+//}
+
+
+
+#endif
 #endregion
 
 
