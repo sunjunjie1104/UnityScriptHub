@@ -37,6 +37,7 @@ public class Tools_SJJ : MonoBehaviour
 
     void Awake()
     {
+      
         if (INS == null) { INS = this; DontDestroyOnLoad(this.gameObject); } else { Destroy(this.gameObject); }
         取消Unity启动画面();
 
@@ -2125,66 +2126,67 @@ public class MeshInfoEditor
 #region 切换场景后自动展开Hierarchy根目录
 #if UNITY_EDITOR
 
-
-
-
-
-
 [InitializeOnLoad]
 public static class HierarchyAutoExpand
 {
+
     static HierarchyAutoExpand()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
-        //   EditorApplication.hierarchyWindowItemOnGUI += HierarchyWindowItemOnGUI;
-
-    }
-
-
-    private static void HierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
-    {
-        GameObject gameObject = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
-        if (gameObject != null && gameObject.scene.name == null)
-        {
-            Rect rect = new Rect(selectionRect);
-            rect.x = rect.width - 20;
-            rect.width = 20;
-            if (GUI.Button(rect, "D"))
-            {
-                Selection.activeGameObject = gameObject;
-                EditorGUIUtility.PingObject(gameObject);
-                EditorApplication.ExecuteMenuItem("Window/General/Hierarchy");
-            }
-        }
     }
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // 在场景完全加载后延迟一小段时间再执行展开操作，确保所有初始化完毕
-        EditorApplication.delayCall += () =>
-        {
-            // 延迟0.5秒执行，确保场景完全稳定
-            EditorApplication.delayCall += ExpandHierarchy;
-        };
+        // 延迟一帧执行，确保场景加载完成
+        EditorApplication.delayCall += 展开主场景的对象;
+
     }
 
-    private static void ExpandHierarchy()
+    static void 展开主场景的对象()
     {
-        // 获取当前场景中的所有根对象
+
+        // 获取当前场景的所有根对象
         var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
 
         foreach (var rootObject in rootObjects)
         {
-            // 展开根对象
-            SetExpandedRecursive(rootObject, true);
+            // 选择对象
+            //Debug.Log("rootObject.name: " + rootObject.name);
+            Selection.activeGameObject = rootObject;
         }
+
+        EditorApplication.delayCall += 展开DontDestroyOnLoad场景的对象;
+
+
     }
 
-    private static void SetExpandedRecursive(GameObject gameObject, bool expand)
+    static void 展开DontDestroyOnLoad场景的对象()
     {
-        // 设置对象的展开状态
-        EditorGUIUtility.PingObject(gameObject);
-        EditorApplication.ExecuteMenuItem("Window/General/Hierarchy");
+        if (SceneManager.GetActiveScene().name == "Scene_Main")
+        {
+            var allGameObjects = new List<GameObject>();
+            var DontDestroyOnLoadGameObjects = new List<GameObject>();
+            allGameObjects.AddRange(Resources.FindObjectsOfTypeAll<GameObject>());
+
+
+            foreach (var obj in allGameObjects)
+            {
+                if (obj.scene.name == "DontDestroyOnLoad")
+                {
+                    if (obj.transform.parent == null)
+                    {
+                        DontDestroyOnLoadGameObjects.Add(obj);
+                       // Debug.Log(obj.name);
+                        Selection.activeGameObject = obj;
+
+                    }
+
+                }
+
+
+            }
+        }
+
 
     }
 
@@ -2193,12 +2195,33 @@ public static class HierarchyAutoExpand
 
 }
 
+
 //[InitializeOnLoad]
 //public static class HierarchyAutoExpand
 //{
 //    static HierarchyAutoExpand()
 //    {
 //        SceneManager.sceneLoaded += OnSceneLoaded;
+//        //   EditorApplication.hierarchyWindowItemOnGUI += HierarchyWindowItemOnGUI;
+
+//    }
+
+
+//    private static void HierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
+//    {
+//        GameObject gameObject = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+//        if (gameObject != null && gameObject.scene.name == null)
+//        {
+//            Rect rect = new Rect(selectionRect);
+//            rect.x = rect.width - 20;
+//            rect.width = 20;
+//            if (GUI.Button(rect, "D"))
+//            {
+//                Selection.activeGameObject = gameObject;
+//                EditorGUIUtility.PingObject(gameObject);
+//                EditorApplication.ExecuteMenuItem("Window/General/Hierarchy");
+//            }
+//        }
 //    }
 
 //    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -2229,13 +2252,10 @@ public static class HierarchyAutoExpand
 //        EditorGUIUtility.PingObject(gameObject);
 //        EditorApplication.ExecuteMenuItem("Window/General/Hierarchy");
 
-//        // 递归展开子对象
-//        foreach (Transform child in gameObject.transform)
-//        {
-//            //  SetExpandedRecursive(child.gameObject, expand);
-//        }
 //    }
-//}
+
+
+
 
 
 
