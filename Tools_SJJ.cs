@@ -26,7 +26,6 @@ using System.Reflection;
 
 
 
-
 #if UNITY_EDITOR
 using UnityEditor.SceneManagement;
 #endif
@@ -40,7 +39,7 @@ public class Tools_SJJ : MonoBehaviour
       
         if (INS == null) { INS = this; DontDestroyOnLoad(this.gameObject); } else { Destroy(this.gameObject); }
         取消Unity启动画面();
-
+        激活多屏显示();
 #if PLATFORM_STANDALONE_WIN
         try
         {
@@ -369,7 +368,7 @@ public class Tools_SJJ : MonoBehaviour
         }
 
         // 检测手指触摸
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+      else  if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
             Vector3 touchPosition = Input.GetTouch(0).position;
             List_G_点击获取的物体组 = List_G_获取点击的物体组(touchPosition);
@@ -784,9 +783,20 @@ public class Tools_SJJ : MonoBehaviour
 
     #region  系统相关
 
+    public  void 激活多屏显示()
+    {
+        for (int i = 0; i < Display.displays.Length; i++)
+        {
+            Display.displays[i].Activate();
+            Screen.SetResolution(Display.displays[i].renderingWidth, Display.displays[i].renderingHeight, true);
+        }
+    }
+     
 
-    //示例 Tools_SJJ.INS.模拟键盘按键_单键(KeyCode.F10);
-    public void 模拟键盘按键_单键(KeyCode key)
+
+
+//示例 Tools_SJJ.INS.模拟键盘按键_单键(KeyCode.F10);
+public void 模拟键盘按键_单键(KeyCode key)
     {
         InputSimulator sim = new InputSimulator();
         WindowsInput.Native.VirtualKeyCode vKey = MapKeyCode(key);
@@ -1744,6 +1754,146 @@ public static class RedAutoRunSomeScene
         }
     }
 }
+#endif
+
+#endregion
+
+
+#region  变量折叠
+
+//示例 
+//#if UNITY_EDITOR
+//[FoldoutGroup("其他")]
+//#endif
+#if UNITY_EDITOR
+public class FoldoutGroupAttribute : PropertyAttribute
+{
+    public string GroupName { get; }
+    public float ButtonWidth { get; }
+    public float ButtonHeight { get; }
+    public Color ButtonColor { get; }
+
+    public FoldoutGroupAttribute(
+        string groupName,
+        float buttonWidth = 600f,
+        float buttonHeight = 25f,
+        float r = 0.2f,
+        float g = 0.6f,
+        float b = 0.8f)
+    {
+        GroupName = groupName;
+        ButtonWidth = buttonWidth;
+        ButtonHeight = buttonHeight;
+        ButtonColor = new Color(r, g, b);
+    }
+}
+
+
+[CustomEditor(typeof(MonoBehaviour), true)]
+public class FoldoutGroupEditor : Editor
+{
+    private static Dictionary<string, bool> foldoutStates = new Dictionary<string, bool>(); // 保存折叠状态
+ 
+    public override void OnInspectorGUI()
+    {
+        SerializedProperty property = serializedObject.GetIterator();
+        property.NextVisible(true); // 跳过脚本字段
+
+        string currentGroup = null; // 当前分组名
+        bool isGroupOpen = true;    // 当前分组是否展开
+
+        while (property.NextVisible(false))
+        {
+            var foldoutGroup = GetFoldoutGroupAttribute(property);
+
+            if (foldoutGroup != null)
+            {
+                // 如果是新分组，绘制折叠按钮
+                if (foldoutGroup.GroupName != currentGroup)
+                {
+                    currentGroup = foldoutGroup.GroupName;
+
+                    // 获取分组状态的唯一标识
+                    string groupKey = $"{serializedObject.targetObject.GetInstanceID()}.{currentGroup}";
+
+                    // 初始化折叠状态
+                    if (!foldoutStates.ContainsKey(groupKey))
+                    {
+                        foldoutStates[groupKey] = true; // 默认展开
+                    }
+
+                    // 绘制自定义折叠按钮
+                    isGroupOpen = foldoutStates[groupKey] = DrawCustomFoldoutButton(foldoutGroup, foldoutStates[groupKey]);
+                }
+            }
+
+            // 如果当前分组未展开，跳过其内容
+            if (!isGroupOpen)
+            {
+                continue;
+            }
+
+            // 绘制字段
+            EditorGUILayout.PropertyField(property, true);
+        }
+
+        serializedObject.ApplyModifiedProperties();
+    }
+
+    private bool DrawCustomFoldoutButton(FoldoutGroupAttribute foldoutGroup, bool isOpen)
+    {
+        // 添加按钮上方的间隔
+        GUILayout.Space(15);
+
+        // 按钮样式
+        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            fontStyle = FontStyle.Bold,
+            normal = { textColor = Color.white }
+        };
+
+        // 按钮区域
+        Rect buttonRect = EditorGUILayout.GetControlRect(false, foldoutGroup.ButtonHeight);
+
+        // 居中按钮位置
+        buttonRect.width = foldoutGroup.ButtonWidth;
+        buttonRect.x = (EditorGUIUtility.currentViewWidth - foldoutGroup.ButtonWidth) / 2;
+
+        // 根据状态切换按钮颜色
+        Color originalColor = GUI.backgroundColor;
+        GUI.backgroundColor = isOpen ? Color.green : Color.gray; // 展开为绿色，折叠为红色
+
+        // 根据状态切换按钮内容
+        string buttonText = foldoutGroup.GroupName;
+        Texture2D icon = (Texture2D)EditorGUIUtility.IconContent(isOpen ? "d_Toolbar Minus" : "d_Toolbar Plus").image;
+        GUIContent buttonContent = new GUIContent($"  {buttonText}", icon);
+
+        // 绘制按钮并返回切换的折叠状态
+        bool toggled = GUI.Button(buttonRect, buttonContent, buttonStyle) ? !isOpen : isOpen;
+
+        // 恢复原始背景颜色
+        GUI.backgroundColor = originalColor;
+
+        // 添加按钮下方的间隔
+        GUILayout.Space(15);
+        return toggled;
+    }
+
+    private FoldoutGroupAttribute GetFoldoutGroupAttribute(SerializedProperty property)
+    {
+        // 检查字段是否具有 FoldoutGroupAttribute
+        var targetObject = serializedObject.targetObject;
+        var targetType = targetObject.GetType();
+        var field = targetType.GetField(property.name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        if (field != null)
+        {
+            return (FoldoutGroupAttribute)System.Attribute.GetCustomAttribute(field, typeof(FoldoutGroupAttribute));
+        }
+        return null;
+    }
+}
+
 #endif
 
 #endregion
