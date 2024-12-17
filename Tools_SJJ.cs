@@ -36,7 +36,7 @@ public class Tools_SJJ : MonoBehaviour
 
     void Awake()
     {
-      
+
         if (INS == null) { INS = this; DontDestroyOnLoad(this.gameObject); } else { Destroy(this.gameObject); }
         取消Unity启动画面();
         激活多屏显示();
@@ -368,7 +368,7 @@ public class Tools_SJJ : MonoBehaviour
         }
 
         // 检测手指触摸
-      else  if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        else if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
             Vector3 touchPosition = Input.GetTouch(0).position;
             List_G_点击获取的物体组 = List_G_获取点击的物体组(touchPosition);
@@ -376,7 +376,7 @@ public class Tools_SJJ : MonoBehaviour
             EVENT_OnClick?.Invoke();
         }
     }
-    List<GameObject> List_G_获取点击的物体组(Vector3 position)
+  public  List<GameObject> List_G_获取点击的物体组(Vector3 position)
     {
         List<GameObject> objectList = new List<GameObject>();
 
@@ -783,20 +783,20 @@ public class Tools_SJJ : MonoBehaviour
 
     #region  系统相关
 
-    public  void 激活多屏显示()
+    public void 激活多屏显示()
     {
         for (int i = 0; i < Display.displays.Length; i++)
         {
             Display.displays[i].Activate();
-            Screen.SetResolution(Display.displays[i].renderingWidth, Display.displays[i].renderingHeight, true);
+           // Screen.SetResolution(Display.displays[i].renderingWidth, Display.displays[i].renderingHeight, true);
         }
     }
-     
 
 
 
-//示例 Tools_SJJ.INS.模拟键盘按键_单键(KeyCode.F10);
-public void 模拟键盘按键_单键(KeyCode key)
+
+    //示例 Tools_SJJ.INS.模拟键盘按键_单键(KeyCode.F10);
+    public void 模拟键盘按键_单键(KeyCode key)
     {
         InputSimulator sim = new InputSimulator();
         WindowsInput.Native.VirtualKeyCode vKey = MapKeyCode(key);
@@ -1793,9 +1793,12 @@ public class FoldoutGroupAttribute : PropertyAttribute
 public class FoldoutGroupEditor : Editor
 {
     private static Dictionary<string, bool> foldoutStates = new Dictionary<string, bool>(); // 保存折叠状态
- 
+
     public override void OnInspectorGUI()
     {
+        // 强制绘制脚本字段，让它能够双击打开脚本
+        DrawScriptField();
+
         SerializedProperty property = serializedObject.GetIterator();
         property.NextVisible(true); // 跳过脚本字段
 
@@ -1838,6 +1841,14 @@ public class FoldoutGroupEditor : Editor
         }
 
         serializedObject.ApplyModifiedProperties();
+    }
+
+    private void DrawScriptField()
+    {
+        MonoScript script = MonoScript.FromMonoBehaviour((MonoBehaviour)target);
+        EditorGUI.BeginDisabledGroup(true); // 禁用编辑脚本字段
+        EditorGUILayout.ObjectField("Script", script, typeof(MonoScript), false);
+        EditorGUI.EndDisabledGroup();
     }
 
     private bool DrawCustomFoldoutButton(FoldoutGroupAttribute foldoutGroup, bool isOpen)
@@ -2411,5 +2422,3 @@ public static class HierarchyAutoExpand
 
 #endif
 #endregion
-
-
