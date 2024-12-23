@@ -21,10 +21,6 @@ using Microsoft.Win32;
 using WindowsInput;
 using OfficeOpenXml;
 using UnityEngine.SceneManagement;
-using System.Reflection;
-
-
-
 
 #if UNITY_EDITOR
 using UnityEditor.SceneManagement;
@@ -330,6 +326,47 @@ public class Tools_SJJ : MonoBehaviour
 
     #region  小方法
 
+
+    // 示例       Tools_SJJ.INS.相机画面保存到streamingassets(Camera.main, 5760, 1200, "1212");
+    public void 相机画面保存到streamingassets(Camera cam, int Int_分辨率X, int Int_分辨率Y, string ST_图片名)
+    {
+        // 1. 创建 RenderTexture
+        RenderTexture renderTexture = new RenderTexture(Int_分辨率X, Int_分辨率Y, 24);
+        cam.targetTexture = renderTexture;
+
+        // 2. 渲染摄像机画面
+        RenderTexture.active = renderTexture;
+        cam.Render();
+
+        // 3. 创建 Texture2D 并读取 RenderTexture 数据
+        Texture2D texture = new Texture2D(Int_分辨率X, Int_分辨率Y, TextureFormat.RGB24, false);
+        texture.ReadPixels(new Rect(0, 0, Int_分辨率X, Int_分辨率Y), 0, 0);
+        texture.Apply();
+
+        // 4. 编码为 PNG
+        byte[] bytes = texture.EncodeToPNG();
+
+        // 5. 确保 StreamingAssets 目录存在（运行时不推荐保存到该目录）
+        string path = Application.streamingAssetsPath + "/" + ST_图片名 + ".png";
+#if UNITY_EDITOR
+        Directory.CreateDirectory(Application.streamingAssetsPath); // 确保路径存在
+        File.WriteAllBytes(path, bytes); // 保存图片
+
+#else
+        Debug.LogError("StreamingAssets is read-only at runtime! Use persistentDataPath instead.");
+#endif
+
+        // 6. 清理
+        cam.targetTexture = null;
+        RenderTexture.active = null;
+        Destroy(renderTexture);
+        Destroy(texture);
+    }
+
+
+
+
+
     public GameObject G_在鼠标指针处生成对象(GameObject G_预制体)
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -376,7 +413,7 @@ public class Tools_SJJ : MonoBehaviour
             EVENT_OnClick?.Invoke();
         }
     }
-  public  List<GameObject> List_G_获取点击的物体组(Vector3 position)
+    public List<GameObject> List_G_获取点击的物体组(Vector3 position)
     {
         List<GameObject> objectList = new List<GameObject>();
 
@@ -788,7 +825,7 @@ public class Tools_SJJ : MonoBehaviour
         for (int i = 0; i < Display.displays.Length; i++)
         {
             Display.displays[i].Activate();
-           // Screen.SetResolution(Display.displays[i].renderingWidth, Display.displays[i].renderingHeight, true);
+            // Screen.SetResolution(Display.displays[i].renderingWidth, Display.displays[i].renderingHeight, true);
         }
     }
 
@@ -1963,7 +2000,7 @@ public class TurboRename : EditorWindow
     GameObject[] SelectedGameObjectObjects = new GameObject[0];
     string[] PreviewSelectedObjects = new string[0];
 
-    bool usebasename=true;
+    bool usebasename = true;
     string basename;
     bool useprefix;
     string prefix;
@@ -1971,7 +2008,7 @@ public class TurboRename : EditorWindow
     string suffix;
 
     public NumberedMethod numbermeth;
-    bool usenumbered=true;
+    bool usenumbered = true;
     int basenumbered = 1;
     int stepnumbered = 1;
 
@@ -2337,7 +2374,7 @@ public static class HierarchyAutoExpand
                     if (obj.transform.parent == null)
                     {
                         DontDestroyOnLoadGameObjects.Add(obj);
-                       // Debug.Log(obj.name);
+                        // Debug.Log(obj.name);
                         Selection.activeGameObject = obj;
 
                     }
