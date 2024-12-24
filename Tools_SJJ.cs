@@ -50,7 +50,10 @@ public class Tools_SJJ : MonoBehaviour
 
     }
 
-
+    private void Start()
+    {
+        //Tools_SJJ.INS.EVENT_OnClick.AddListener(() => { Tools_SJJ.INS.打印对象组(Tools_SJJ.INS.List_G_点击获取的物体组); });
+    }
 
     void Update()
     {
@@ -326,7 +329,7 @@ public class Tools_SJJ : MonoBehaviour
 
     #region  小方法
 
-
+#if UNITY_EDITOR
     // 示例       Tools_SJJ.INS.相机画面保存到streamingassets(Camera.main, 5760, 1200, "1212");
     public void 相机画面保存到streamingassets(Camera cam, int Int_分辨率X, int Int_分辨率Y, string ST_图片名)
     {
@@ -348,13 +351,12 @@ public class Tools_SJJ : MonoBehaviour
 
         // 5. 确保 StreamingAssets 目录存在（运行时不推荐保存到该目录）
         string path = Application.streamingAssetsPath + "/" + ST_图片名 + ".png";
-#if UNITY_EDITOR
+
         Directory.CreateDirectory(Application.streamingAssetsPath); // 确保路径存在
         File.WriteAllBytes(path, bytes); // 保存图片
 
-#else
-        Debug.LogError("StreamingAssets is read-only at runtime! Use persistentDataPath instead.");
-#endif
+
+
 
         // 6. 清理
         cam.targetTexture = null;
@@ -364,6 +366,7 @@ public class Tools_SJJ : MonoBehaviour
     }
 
 
+#endif
 
 
 
@@ -1497,6 +1500,15 @@ public class Tools_SJJ : MonoBehaviour
             list.Add(int.Parse(cellValue.ToString()));
         }
     }
+
+    public void 添加表格数据到List_FLOAT(object cellValue, List<float> list)
+    {
+        if (cellValue != null)
+        {
+            list.Add(float.Parse(cellValue.ToString()));
+        }
+    }
+
     #endregion
 
 
