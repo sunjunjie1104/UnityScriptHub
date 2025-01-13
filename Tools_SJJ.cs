@@ -34,25 +34,15 @@ public class Tools_SJJ : MonoBehaviour
     {
 
         if (INS == null) { INS = this; DontDestroyOnLoad(this.gameObject); } else { Destroy(this.gameObject); }
-        取消Unity启动画面();
-        激活多屏显示();
-#if PLATFORM_STANDALONE_WIN
-        try
-        {
-            删除注册表键值(Application.productName);
-            读取表格并设置程序参数();
-        }
-        catch (Exception ex)
-        {
-            UnityEngine.Debug.LogError($"An error occurred: {ex.Message}\n{ex.StackTrace}");
-        }
-#endif
+        // 取消Unity启动画面();
+        //读取表格并设置程序参数();
+        //激活多屏显示();
 
     }
 
-    private void Start()
+    void Start()
     {
-        //Tools_SJJ.INS.EVENT_OnClick.AddListener(() => { Tools_SJJ.INS.打印对象组(Tools_SJJ.INS.List_G_点击获取的物体组); });
+
     }
 
     void Update()
@@ -322,6 +312,23 @@ public class Tools_SJJ : MonoBehaviour
         });
     }
 
+    public void 图片无限转动(RectTransform RE, float F_转一圈用时,string ST_正反向)
+    {
+
+        if (ST_正反向 == "正向")
+        {
+            RE.DOLocalRotate(Vector3.forward * 360f, F_转一圈用时, RotateMode.FastBeyond360).SetLoops(-1, LoopType.Incremental).SetEase(Ease.Linear);
+        }
+        else
+        {
+            RE.DOLocalRotate(Vector3.back * 360f, F_转一圈用时, RotateMode.FastBeyond360).SetLoops(-1, LoopType.Incremental).SetEase(Ease.Linear);
+        }
+    }
+
+    public void 图片无限缩放(RectTransform RE, float F_缩放比例, float F_单次缩放用时)
+    {
+        RE.DOScale(F_缩放比例, F_单次缩放用时).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.Linear);
+    }
 
     #endregion
 
@@ -823,15 +830,19 @@ public class Tools_SJJ : MonoBehaviour
 
     #region  系统相关
 
+
+#if  PLATFORM_STANDALONE_WIN
     public void 激活多屏显示()
     {
+
         for (int i = 0; i < Display.displays.Length; i++)
         {
             Display.displays[i].Activate();
-            // Screen.SetResolution(Display.displays[i].renderingWidth, Display.displays[i].renderingHeight, true);
+            Screen.SetResolution(Display.displays[i].renderingWidth, Display.displays[i].renderingHeight, true);
         }
-    }
 
+    }
+#endif
 
 
 
@@ -971,7 +982,7 @@ public class Tools_SJJ : MonoBehaviour
 
     public void 显示打印台()
     {
-        SRDebug.Instance.ShowDebugPanel();
+       
     }
 
 
@@ -1111,21 +1122,36 @@ public class Tools_SJJ : MonoBehaviour
     }
 
 
+
+
+
+
+
+
     //示例  删除注册表键值(Application.productName);
+#if PLATFORM_STANDALONE_WIN
     public void 删除注册表键值(string name)
     {
-        string[] aimnames;
-        RegistryKey hkml = Registry.CurrentUser;
-        RegistryKey software = hkml.OpenSubKey("SOFTWARE", true);
-        RegistryKey aimdir = software.OpenSubKey(Application.companyName, true);
-        aimnames = aimdir.GetSubKeyNames();
-        foreach (string aimKey in aimnames)
+        try
         {
-            if (aimKey == name)
-                aimdir.DeleteSubKeyTree(name);
+            string[] aimnames;
+            RegistryKey hkml = Registry.CurrentUser;
+            RegistryKey software = hkml.OpenSubKey("SOFTWARE", true);
+            RegistryKey aimdir = software.OpenSubKey(Application.companyName, true);
+            aimnames = aimdir.GetSubKeyNames();
+            foreach (string aimKey in aimnames)
+            {
+                if (aimKey == name)
+                    aimdir.DeleteSubKeyTree(name);
 
+            }
+        }
+        catch (Exception ex)
+        {
+            UnityEngine.Debug.LogError($"An error occurred: {ex.Message}\n{ex.StackTrace}");
         }
     }
+#endif
 
 
 
@@ -2404,70 +2430,6 @@ public static class HierarchyAutoExpand
 
 
 }
-
-
-//[InitializeOnLoad]
-//public static class HierarchyAutoExpand
-//{
-//    static HierarchyAutoExpand()
-//    {
-//        SceneManager.sceneLoaded += OnSceneLoaded;
-//        //   EditorApplication.hierarchyWindowItemOnGUI += HierarchyWindowItemOnGUI;
-
-//    }
-
-
-//    private static void HierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
-//    {
-//        GameObject gameObject = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
-//        if (gameObject != null && gameObject.scene.name == null)
-//        {
-//            Rect rect = new Rect(selectionRect);
-//            rect.x = rect.width - 20;
-//            rect.width = 20;
-//            if (GUI.Button(rect, "D"))
-//            {
-//                Selection.activeGameObject = gameObject;
-//                EditorGUIUtility.PingObject(gameObject);
-//                EditorApplication.ExecuteMenuItem("Window/General/Hierarchy");
-//            }
-//        }
-//    }
-
-//    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-//    {
-//        // 在场景完全加载后延迟一小段时间再执行展开操作，确保所有初始化完毕
-//        EditorApplication.delayCall += () =>
-//        {
-//            // 延迟0.5秒执行，确保场景完全稳定
-//            EditorApplication.delayCall += ExpandHierarchy;
-//        };
-//    }
-
-//    private static void ExpandHierarchy()
-//    {
-//        // 获取当前场景中的所有根对象
-//        var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
-
-//        foreach (var rootObject in rootObjects)
-//        {
-//            // 展开根对象
-//            SetExpandedRecursive(rootObject, true);
-//        }
-//    }
-
-//    private static void SetExpandedRecursive(GameObject gameObject, bool expand)
-//    {
-//        // 设置对象的展开状态
-//        EditorGUIUtility.PingObject(gameObject);
-//        EditorApplication.ExecuteMenuItem("Window/General/Hierarchy");
-
-//    }
-
-
-
-
-
 
 #endif
 #endregion
