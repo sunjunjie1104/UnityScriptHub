@@ -98,6 +98,14 @@ public class Tools_SJJ : MonoBehaviour
 
     }
 
+    //示例   Tools_SJJ.INS.互换RAWIma(ref ima_内容图1, ref ima_内容图2);
+    public void 互换RAWIma(ref RawImage rawIma1, ref RawImage rawIma2)
+    {
+        RawImage Ima_临时 = rawIma1;
+        rawIma1 = rawIma2;
+        rawIma2 = Ima_临时;
+
+    }
 
 
 
@@ -312,23 +320,6 @@ public class Tools_SJJ : MonoBehaviour
         });
     }
 
-    public void 图片无限转动(RectTransform RE, float F_转一圈用时,string ST_正反向)
-    {
-
-        if (ST_正反向 == "正向")
-        {
-            RE.DOLocalRotate(Vector3.forward * 360f, F_转一圈用时, RotateMode.FastBeyond360).SetLoops(-1, LoopType.Incremental).SetEase(Ease.Linear);
-        }
-        else
-        {
-            RE.DOLocalRotate(Vector3.back * 360f, F_转一圈用时, RotateMode.FastBeyond360).SetLoops(-1, LoopType.Incremental).SetEase(Ease.Linear);
-        }
-    }
-
-    public void 图片无限缩放(RectTransform RE, float F_缩放比例, float F_单次缩放用时)
-    {
-        RE.DOScale(F_缩放比例, F_单次缩放用时).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.Linear);
-    }
 
     #endregion
 
@@ -375,6 +366,7 @@ public class Tools_SJJ : MonoBehaviour
 
 #endif
 
+   
 
 
     public GameObject G_在鼠标指针处生成对象(GameObject G_预制体)
@@ -409,7 +401,7 @@ public class Tools_SJJ : MonoBehaviour
         if (Input.GetMouseButtonDown(0) || Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
             Vector3 clickPosition = Input.mousePosition;
-            List_G_点击获取的物体组 = List_G_获取点击的物体组(clickPosition);
+            List_G_点击获取的物体组 = List_G_获取点击的物体组(Camera.main, clickPosition);
             //  打印对象组(List_G_点击获取的物体组);
             EVENT_OnClick?.Invoke();
         }
@@ -418,12 +410,12 @@ public class Tools_SJJ : MonoBehaviour
         else if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
             Vector3 touchPosition = Input.GetTouch(0).position;
-            List_G_点击获取的物体组 = List_G_获取点击的物体组(touchPosition);
+            List_G_点击获取的物体组 = List_G_获取点击的物体组(Camera.main, touchPosition);
             // 打印对象组(List_G_点击获取的物体组);
             EVENT_OnClick?.Invoke();
         }
     }
-    public List<GameObject> List_G_获取点击的物体组(Vector3 position)
+    public List<GameObject> List_G_获取点击的物体组(Camera cam, Vector3 position)
     {
         List<GameObject> objectList = new List<GameObject>();
 
@@ -441,7 +433,7 @@ public class Tools_SJJ : MonoBehaviour
         }
 
         // 检测 3D 物体
-        Ray ray = Camera.main.ScreenPointToRay(position);
+        Ray ray = cam.ScreenPointToRay(position);
         RaycastHit[] hits = Physics.RaycastAll(ray);
 
         // 按照距离从近到远排序
@@ -832,9 +824,11 @@ public class Tools_SJJ : MonoBehaviour
 
 
 #if  PLATFORM_STANDALONE_WIN
+    int Int_激活多屏显示次数 = 0;
     public void 激活多屏显示()
     {
-
+        Int_激活多屏显示次数 += 1;
+        if (Int_激活多屏显示次数 > 1) { return; }
         for (int i = 0; i < Display.displays.Length; i++)
         {
             Display.displays[i].Activate();
@@ -982,7 +976,7 @@ public class Tools_SJJ : MonoBehaviour
 
     public void 显示打印台()
     {
-       
+        SRDebug.Instance.ShowDebugPanel();
     }
 
 
@@ -1602,9 +1596,17 @@ public class Tools_SJJ : MonoBehaviour
     }
 
 
+
+
     // 示例 Tools_SJJ.INS.设置程序窗口化无边框并设置位置和宽高("", 400, 600, 1000, 400);
+    int Int_设置分辨率次数 = 0;
     public void 设置程序窗口化无边框并设置位置和宽高(string ST_程序名, int _posX, int _posY, int _Txtwith, int _Txtheight)
     {
+        Int_设置分辨率次数 += 1;
+        if (Int_设置分辨率次数 > 1)
+        {
+            return;
+        }
         if (string.IsNullOrEmpty(ST_程序名))
         {
             ST_程序名 = Application.productName;
@@ -1622,6 +1624,17 @@ public class Tools_SJJ : MonoBehaviour
 
     }
 
+
+    public void 设置程序为全屏()
+    {
+        Int_设置分辨率次数 += 1;
+        if (Int_设置分辨率次数 > 1)
+        {
+            return;
+        }
+        Screen.fullScreen = true;
+
+    }
 
     public void 读取表格并设置程序参数()
     {
