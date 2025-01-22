@@ -50,7 +50,7 @@ public class Tools_SJJ : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape)) { Application.Quit(); }
 
         UPDATE_获取点击的物体();
-
+        UPDATA_获取点击的屏幕坐标();
     }
 
 
@@ -392,9 +392,9 @@ public class Tools_SJJ : MonoBehaviour
 
 
 
-    //示例   Tools_SJJ.INS.EVENT_OnClick.AddListener( () => { Tools_SJJ.INS.打印对象组(Tools_SJJ.INS.List_G_点击获取的物体组); });
+    //示例    Tools_SJJ.INS.EVENT_OnClick_获取点击物体.AddListener(() => { Tools_SJJ.INS.打印对象组(Tools_SJJ.INS.List_G_点击获取的物体组); });
     [HideInInspector] public List<GameObject> List_G_点击获取的物体组 = new List<GameObject>();
-    [HideInInspector] public UnityEvent EVENT_OnClick;
+    [HideInInspector] public UnityEvent EVENT_OnClick_获取点击物体;
     void UPDATE_获取点击的物体()
     {
         // 检测鼠标点击
@@ -403,7 +403,7 @@ public class Tools_SJJ : MonoBehaviour
             Vector3 clickPosition = Input.mousePosition;
             List_G_点击获取的物体组 = List_G_获取点击的物体组(Camera.main, clickPosition);
             //  打印对象组(List_G_点击获取的物体组);
-            EVENT_OnClick?.Invoke();
+            EVENT_OnClick_获取点击物体?.Invoke();
         }
 
         // 检测手指触摸
@@ -412,7 +412,7 @@ public class Tools_SJJ : MonoBehaviour
             Vector3 touchPosition = Input.GetTouch(0).position;
             List_G_点击获取的物体组 = List_G_获取点击的物体组(Camera.main, touchPosition);
             // 打印对象组(List_G_点击获取的物体组);
-            EVENT_OnClick?.Invoke();
+            EVENT_OnClick_获取点击物体?.Invoke();
         }
     }
     public List<GameObject> List_G_获取点击的物体组(Camera cam, Vector3 position)
@@ -453,6 +453,18 @@ public class Tools_SJJ : MonoBehaviour
         }
 
         return objectList;
+    }
+
+
+
+
+    //示例 Tools_SJJ.INS.EVENT_OnClick_获取点击坐标.AddListener(() => { print(Tools_SJJ.INS.V2_点击的屏幕坐标); });
+    [HideInInspector] public Vector2 V2_点击的屏幕坐标=Vector2.zero;
+    [HideInInspector] public UnityEvent EVENT_OnClick_获取点击坐标;
+    void UPDATA_获取点击的屏幕坐标()
+    {
+        if (Input.GetMouseButtonDown(0)) { V2_点击的屏幕坐标 = Input.mousePosition; EVENT_OnClick_获取点击坐标?.Invoke(); }
+        else if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) { V2_点击的屏幕坐标 = Input.GetTouch(0).position; EVENT_OnClick_获取点击坐标?.Invoke(); }
     }
 
 
