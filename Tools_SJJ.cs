@@ -21,6 +21,8 @@ using Microsoft.Win32;
 using WindowsInput;
 using OfficeOpenXml;
 using UnityEngine.SceneManagement;
+using System.Runtime.InteropServices.ComTypes;
+
 
 #if UNITY_EDITOR
 using UnityEditor.SceneManagement;
@@ -366,7 +368,7 @@ public class Tools_SJJ : MonoBehaviour
 
 #endif
 
-   
+
 
 
     public GameObject G_在鼠标指针处生成对象(GameObject G_预制体)
@@ -459,7 +461,7 @@ public class Tools_SJJ : MonoBehaviour
 
 
     //示例 Tools_SJJ.INS.EVENT_OnClick_获取点击坐标.AddListener(() => { print(Tools_SJJ.INS.V2_点击的屏幕坐标); });
-    [HideInInspector] public Vector2 V2_点击的屏幕坐标=Vector2.zero;
+    [HideInInspector] public Vector2 V2_点击的屏幕坐标 = Vector2.zero;
     [HideInInspector] public UnityEvent EVENT_OnClick_获取点击坐标;
     void UPDATA_获取点击的屏幕坐标()
     {
@@ -1216,8 +1218,82 @@ public class Tools_SJJ : MonoBehaviour
 
 
 
+    //使用示例 Tools_SJJ.INS.ST_读取txt文件("窗口位置.txt",3);
+    public string ST_读取txt文件(string fileName, int Int_第几行数据)
+    {
+        int aa = Int_第几行数据 - 1;
+        try
+        {
+            // 获取StreamingAssets的路径
+            string filePath = Path.Combine(Application.streamingAssetsPath, fileName);
 
+            // 检查文件是否存在
+            if (File.Exists(filePath))
+            {
+                // 读取文件的所有行
+                string[] lines = File.ReadAllLines(filePath);
 
+                // 检查指定的行号是否有效
+                if (aa >= 0 && aa < lines.Length)
+                {
+                    // 返回指定行的内容
+                    return lines[aa];
+                }
+                else
+                {
+                    print("Line number is out of bounds.");
+                    return string.Empty;
+                }
+            }
+            else
+            {
+                print("File does not exist at: " + filePath);
+                return string.Empty;
+            }
+        }
+        catch (Exception e)
+        {
+            print("Error reading file: " + e.Message);
+            return string.Empty;
+        }
+    }
+
+    //使用示例  Tools_SJJ.INS.写入txt数据("窗口位置.txt", "100111",1);
+    public void 写入txt数据(string fileName, string 写入内容, int Int_第几行数据)
+    {
+        string filePath = Path.Combine(Application.streamingAssetsPath, fileName);
+
+        // 如果文件不存在，则创建一个新文件
+        if (!File.Exists(filePath))
+        {
+            File.WriteAllText(filePath, "");
+        }
+
+        string[] lines = File.ReadAllLines(filePath);
+        if (Int_第几行数据 > lines.Length)
+        {
+            // 创建一个新的数组，长度为指定行数
+            string[] newLines = new string[Int_第几行数据];
+            // 复制原有内容到新数组
+            for (int i = 0; i < lines.Length; i++)
+            {
+                newLines[i] = lines[i];
+            }
+            // 将剩余的行设置为空字符串
+            for (int i = lines.Length; i < Int_第几行数据 - 1; i++)
+            {
+                newLines[i] = "";
+            }
+            newLines[Int_第几行数据 - 1] = 写入内容;
+            lines = newLines;
+        }
+        else
+        {
+            lines[Int_第几行数据 - 1] = 写入内容;
+        }
+
+        File.WriteAllLines(filePath, lines);
+    }
 
     #region  读写表格
 
@@ -1558,6 +1634,9 @@ public class Tools_SJJ : MonoBehaviour
     [DllImport("user32.dll")]
     private static extern int GetWindowLong(System.IntPtr hWnd, int nIndex);
 
+    [DllImport("user32.dll")]
+    static extern int SetLayeredWindowAttributes(IntPtr hwnd, int crKey, int bAlpha, int dwFlags);
+
     // 窗口控制相关常量
     const uint SWP_NOMOVE = 0x0002;
     const uint SWP_NOSIZE = 0x0001;
@@ -1582,7 +1661,31 @@ public class Tools_SJJ : MonoBehaviour
     private const int WS_CAPTION = 0x00C00000;
     private const uint SWP_NOZORDER = 0x0004;
     private const uint SWP_NOACTIVATE = 0x0010;
+    private const int GWL_EXSTYLE = -20;
+    private const int WS_EX_LAYERED = 0x00080000;
 
+
+    // 程序路径和名字不能有中文
+    public void 设置程序背景为透明()
+    {
+        IntPtr hwnd = FindWindow(null, Application.productName);
+        if (hwnd == IntPtr.Zero)
+        {
+            print("没有找到窗口");
+        }
+        else
+        {
+            print("找到窗口" + hwnd);
+
+            int intExTemp = GetWindowLong(hwnd, GWL_EXSTYLE);
+
+            SetWindowLong(hwnd, GWL_EXSTYLE, intExTemp | WS_EX_LAYERED);
+
+            SetLayeredWindowAttributes(hwnd, 0, 255, 1);
+
+        }
+
+    }
 
     //示例  Tools_SJJ.INS.将程序始终置于最前面("");
     public void 将程序始终置于最前面(string ST_程序名)
@@ -1590,7 +1693,7 @@ public class Tools_SJJ : MonoBehaviour
         if (string.IsNullOrEmpty(ST_程序名))
         {
             ST_程序名 = Application.productName;
-            print(ST_程序名);
+            // print(ST_程序名);
         }
 
         IntPtr windowHandle = FindWindow(null, ST_程序名);
@@ -1646,6 +1749,47 @@ public class Tools_SJJ : MonoBehaviour
         }
         Screen.fullScreen = true;
 
+    }
+
+
+
+
+
+
+    [DllImport("user32.dll")]
+    static extern bool GetWindowRect(IntPtr hwnd, ref RECT lpRect);
+
+    // Define a RECT structure to hold the window position and size
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    public Vector2 V2_获取当前程序窗口位置XY()
+    {
+        IntPtr windowHandle = FindWindow(null, Application.productName);  // Find the window by its title
+        if (windowHandle != IntPtr.Zero)
+        {
+            RECT windowRect = new RECT();
+            if (GetWindowRect(windowHandle, ref windowRect))
+            {
+                int windowPosX = windowRect.Left;
+                int windowPosY = windowRect.Top;
+                // UnityEngine.Debug.Log($"Window Position: X = {windowPosX}, Y = {windowPosY}");
+                return new Vector2(windowPosX, windowPosY);
+            }
+
+        }
+        else
+        {
+            UnityEngine.Debug.LogError("Window not found.");
+
+        }
+        return new Vector2(0, 0);
     }
 
     public void 读取表格并设置程序参数()
