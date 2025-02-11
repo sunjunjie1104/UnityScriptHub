@@ -21,7 +21,7 @@ using Microsoft.Win32;
 using WindowsInput;
 using OfficeOpenXml;
 using UnityEngine.SceneManagement;
-using System.Runtime.InteropServices.ComTypes;
+using System.Linq;
 
 
 #if UNITY_EDITOR
@@ -36,9 +36,6 @@ public class Tools_SJJ : MonoBehaviour
     {
 
         if (INS == null) { INS = this; DontDestroyOnLoad(this.gameObject); } else { Destroy(this.gameObject); }
-        // 取消Unity启动画面();
-        //读取表格并设置程序参数();
-        //激活多屏显示();
 
     }
 
@@ -1136,10 +1133,11 @@ public class Tools_SJJ : MonoBehaviour
 
 
 
-    //示例  删除注册表键值(Application.productName);
+    //示例  Tools_SJJ.INS.删除注册表键值();
 #if PLATFORM_STANDALONE_WIN
-    public void 删除注册表键值(string name)
+    public void 删除注册表键值()
     {
+        string name = Application.productName;
         try
         {
             string[] aimnames;
@@ -1687,14 +1685,11 @@ public class Tools_SJJ : MonoBehaviour
 
     }
 
-    //示例  Tools_SJJ.INS.将程序始终置于最前面("");
-    public void 将程序始终置于最前面(string ST_程序名)
+    //示例  Tools_SJJ.INS.将程序始终置于最前面();
+    public void 将程序始终置于最前面()
     {
-        if (string.IsNullOrEmpty(ST_程序名))
-        {
-            ST_程序名 = Application.productName;
-            // print(ST_程序名);
-        }
+
+        string ST_程序名 = Application.productName;
 
         IntPtr windowHandle = FindWindow(null, ST_程序名);
         if (windowHandle != IntPtr.Zero)
@@ -1713,23 +1708,18 @@ public class Tools_SJJ : MonoBehaviour
 
 
 
-    // 示例 Tools_SJJ.INS.设置程序窗口化无边框并设置位置和宽高("", 400, 600, 1000, 400);
+    // 示例 Tools_SJJ.INS.设置程序窗口化无边框并设置位置和宽高( 0, 0, 500, 200);
     int Int_设置分辨率次数 = 0;
-    public void 设置程序窗口化无边框并设置位置和宽高(string ST_程序名, int _posX, int _posY, int _Txtwith, int _Txtheight)
+    public void 设置程序窗口化无边框并设置位置和宽高(int _posX, int _posY, int _Txtwith, int _Txtheight)
     {
+        string ST_程序名 = Application.productName;
         Int_设置分辨率次数 += 1;
         if (Int_设置分辨率次数 > 1)
         {
             return;
         }
-        if (string.IsNullOrEmpty(ST_程序名))
-        {
-            ST_程序名 = Application.productName;
-        }
         IntPtr windowHandle = FindWindow(null, ST_程序名);
-
         Screen.fullScreen = false;
-
         // 设置窗口为无边框
         int style = GetWindowLong(windowHandle, GWL_STYLE);
         style &= ~WS_BORDER;
@@ -1807,7 +1797,7 @@ public class Tools_SJJ : MonoBehaviour
             Int_分辨率高 = int.Parse(ST_读取表格单格信息("/程序配置表", 4, 2));
             Int_窗口位置X = int.Parse(ST_读取表格单格信息("/程序配置表", 5, 2));
             Int_窗口位置Y = int.Parse(ST_读取表格单格信息("/程序配置表", 6, 2));
-            设置程序窗口化无边框并设置位置和宽高("", Int_窗口位置X, Int_窗口位置Y, Int_分辨率宽, Int_分辨率高);
+            设置程序窗口化无边框并设置位置和宽高(Int_窗口位置X, Int_窗口位置Y, Int_分辨率宽, Int_分辨率高);
         }
         else
         {
@@ -1816,7 +1806,7 @@ public class Tools_SJJ : MonoBehaviour
 
         if (ST_读取表格单格信息("/程序配置表", 7, 2) == "是")
         {
-            将程序始终置于最前面("");
+            将程序始终置于最前面();
         }
     }
     #endregion
@@ -1918,89 +1908,62 @@ public class FPSDisplay : MonoBehaviour
 #endregion
 
 
-#region  自动运行初始场景
-//自动运行初始场景  初始场景是buildsetting中的第一个场景
+
+#region 自动运行初始场景
 
 #if UNITY_EDITOR
+
 [InitializeOnLoad]
 
-public static class RedAutoRunSomeScene
+public static class AutoRunSomeScene
 {
-    public static string filePath = "Red/Setting/AutoLoadSceneName.txt";
-    public static string StartSceneName = "Scene_Main";
+    private const string MainSceneName = "Scene_Main";
+    private const string LoadSceneName = "Scene_Load";
 
-
-    static RedAutoRunSomeScene()
+    static AutoRunSomeScene()
     {
         EditorApplication.playModeStateChanged += OnPlayerModeStateChanged;
     }
 
 
-    private static void OnPlayerModeStateChanged(PlayModeStateChange playModeState)
+    private static void OnPlayerModeStateChanged(PlayModeStateChange state)
     {
-        if (playModeState != PlayModeStateChange.ExitingEditMode)
+        if (state != PlayModeStateChange.ExitingEditMode) return;
+
+        var currentScene = EditorSceneManager.GetActiveScene();
+        SceneAsset targetScene;
+
+        if (currentScene.name == MainSceneName)
         {
-            return;
-        }
-        var currentStartScene = EditorSceneManager.GetActiveScene();
-        if (currentStartScene.name == StartSceneName)
-        {
-            var targetScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(EditorBuildSettings.scenes[0].path);
-            EditorSceneManager.playModeStartScene = targetScene;
+            // 查找场景加载路径
+            var loadScenePath = EditorBuildSettings.scenes
+                .FirstOrDefault(s => Path.GetFileNameWithoutExtension(s.path) == LoadSceneName)?
+                .path;
+
+            if (!string.IsNullOrEmpty(loadScenePath))
+            {
+                targetScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(loadScenePath);
+            }
+            else
+            {
+                UnityEngine.Debug.LogError($"找不到场景: {LoadSceneName}");
+                return;
+            }
         }
         else
         {
-            var targetScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(currentStartScene.path);
-            EditorSceneManager.playModeStartScene = targetScene;
+            targetScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(currentScene.path);
         }
+
+        EditorSceneManager.playModeStartScene = targetScene;
     }
 
-
-    static bool ValidatePlayModeUseFirstScene()
-    {
-        Menu.SetChecked("BuildTools/PlayModeUseFirstScene", EditorSceneManager.playModeStartScene != null);
-        return !EditorApplication.isPlaying;
-    }
-
-    static void UpdatePlayModeUseFirstScene()
-    {
-        EditorApplication.playModeStateChanged += null;
-        if (Menu.GetChecked("BuildTools/PlayModeUseFirstScene"))
-        {
-            EditorSceneManager.playModeStartScene = null;
-        }
-        else
-        {
-            SceneAsset scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(EditorBuildSettings.scenes[0].path);
-            EditorSceneManager.playModeStartScene = scene;
-        }
-    }
-
-    static void LoadSceneName()
-    {
-
-        string directoryPath = System.IO.Path.GetDirectoryName(filePath);
-        if (!Directory.Exists(directoryPath))
-        {
-            Directory.CreateDirectory(directoryPath);
-        }
-
-        if (File.Exists(filePath))
-        {
-            string content = File.ReadAllText(filePath);
-            // StartSceneName = content;
-        }
-        else
-        {
-            string defaultContent = "SceneName";
-            File.WriteAllText(filePath, defaultContent);
-            StartSceneName = "SceneName";
-        }
-    }
 }
+
 #endif
 
 #endregion
+
 
 
 #region  变量折叠
